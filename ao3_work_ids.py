@@ -1,12 +1,14 @@
 # Retrieve fic ids from an AO3 search
 # Will return in searched order
 # Saves ids to a csv for later use e.g. to retrieve fic text
+# this is for python 2.7 
 
 from bs4 import BeautifulSoup
 import re
 import time
 import requests
 import csv
+import sys
 
 url = ""
 num_requested_fic = 0
@@ -50,6 +52,9 @@ def get_user_params():
 def get_ids():
 	req = requests.get(url)
 	soup = BeautifulSoup(req.text, "lxml")
+	# some responsiveness in the "UI"
+	sys.stdout.write('.')
+	sys.stdout.flush()
 	works = soup.find_all(class_="work blurb group")
 	ids = []
 	for tag in works:
