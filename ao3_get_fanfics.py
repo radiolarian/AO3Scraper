@@ -21,7 +21,7 @@
 # Note that by default, the script appends to existing csvs instead of overwriting them.
 #
 # Author: Jingyi Li soundtracknoon [at] gmail
-# I wrote this in Python 2.7. 9/23/16
+# I wrote this in Python 2.7 (hence all the unicode->ascii CSV conversion). 9/23/16
 #
 #######
 
@@ -40,7 +40,7 @@ def get_tag_info(category, meta):
 		tag_list = meta.find("dd", class_=str(category) + ' tags').find_all(class_="tag")
 	except AttributeError as e:
 		return []
-	return [result.text for result in tag_list] 
+	return [result.text.encode('ascii', 'ignore') for result in tag_list] 
 	
 def get_stats(meta):
 	'''
@@ -48,18 +48,27 @@ def get_stats(meta):
 	language, published, status, date status, words, chapters, comments, kudos, bookmarks, hits
 	'''
 	categories = ['language', 'published', 'status', 'words', 'chapters', 'comments', 'kudos', 'bookmarks', 'hits'] 
+
 	stats = list(map(lambda category: meta.find("dd", class_=category), categories))
-	
+
 	if not stats[2]:
 		stats[2] = stats[1] #no explicit completed field -- one shot
-	
-	stats = [stat.text for stat in stats]
+	try:		
+		stats = [stat.text for stat in stats]
+	except AttributeError as e: #for some reason, AO3 sometimes miss stat tags (like hits)
+		new_stats = []
+		for stat in stats:
+			if stat: new_stats.append(stat.text)
+			else: new_stats.append('null')
+		stats = new_stats
+
 	stats[0] = stats[0].rstrip().lstrip() #language has weird whitespace characters
 	#add a custom completed/updated field
 	status  = meta.find("dt", class_="status")
 	if not status: status = 'Completed' 
 	else: status = status.text.strip(':')
 	stats.insert(2, status)
+	stats = list(map(lambda s: s.encode('ascii', 'ignore'), stats))
 	
 	return stats      
 
@@ -68,7 +77,7 @@ def get_tags(meta):
 	returns a list of lists, of
 	rating, category, fandom, pairing, characters, additional_tags
 	'''
-	tags = ['rating', 'category', 'fandom', 'relationships', 'character', 'freeform']
+	tags = ['rating', 'category', 'fandom', 'relationship', 'character', 'freeform']
 	return list(map(lambda tag: get_tag_info(tag, meta), tags))
 
 def write_fic_to_csv(fic_id, writer, header_info=''):
@@ -91,12 +100,10 @@ def write_fic_to_csv(fic_id, writer, header_info=''):
 	#get the fic itself
 	content = soup.find("div", id= "chapters")
 	chapters = content.select('p')
-	chaptertext = '\n\n'.join([chapter.text for chapter in chapters])
-	print 'tags! ', tags
-	print 'stats! ', stats 
-	print 'content! ', chaptertext[0:100]
-
-
+	chaptertext = '\n\n'.join([chapter.text for chapter in chapters]).encode('ascii', 'ignore')
+	row = list(map(lambda x: ', '.join(x), tags)) + stats + [chaptertext]
+	writer.writerow(row)
+	print 'Done.'
 	
 def get_args(): 
 	parser = argparse.ArgumentParser(description='Scrape and save some fanfic, given their AO3 IDs.')
@@ -114,21 +121,18 @@ def get_args():
 	is_csv = (len(fic_ids) == 1 and '.csv' in fic_ids[0]) 
 	csv_out = str(args.csv)
 	headers = str(args.header)
-	print "ids: ", fic_ids
-	print "csv ", csv_out 
-	print "headers ", headers 
-	print 'is csv ', is_csv
 	return fic_ids, csv_out, headers, is_csv
-
 
 def main():
 	fic_ids, csv_out, headers, is_csv = get_args()
 	os.chdir(os.getcwd())
-	#does the csv already exist? if not, let's write a header row.
-	if not os.path.isfile(csv_out):
-		header = ['rating', 'category', 'fandom', 'character', 'additional tags', 'language', 'published', 'status', 'status date', 'words', 'chapters', 'comments', 'kudos', 'bookmarks', 'hits', 'body']
 	with open(csv_out, 'a') as f_out:
 		writer = csv.writer(f_out)
+		#does the csv already exist? if not, let's write a header row.
+		if os.stat(csv_out).st_size == 0:
+			print 'header!!!!!!'
+			header = ['rating', 'category', 'fandom', 'relationship', 'character', 'additional tags', 'language', 'published', 'status', 'status date', 'words', 'chapters', 'comments', 'kudos', 'bookmarks', 'hits', 'body']
+			writer.writerow(header)
 
 		if is_csv:
 			csv_fname = fic_ids[0]
@@ -136,8 +140,10 @@ def main():
 				reader = csv.reader(f_in)
 				for row in reader:
 					write_fic_to_csv(row[0], writer)
+					time.sleep(1)
 		else:
 			for fic_id in fic_ids:
 				write_fic_to_csv(fic_id, writer)
+				time.sleep(1)
 
 main()
