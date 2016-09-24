@@ -18,7 +18,7 @@ We get this URL as a result: http://archiveofourown.org/works?utf8=%E2%9C%93&wor
 
 Run `python ao3_work_ids.py`. The command line interface will ask you for this URL, and a .csv output file (let's call it sherlock.csv).
 
-Now, to actually get the fics, run `python ao3_get_fanfics.py sherlock.csv`. This script takes in command line flags:
+Now, to actually get the fics, run `python ao3_get_fanfics.py sherlock.csv`. You can optionally add some flags: 
 - `--csv output.csv` (the name of the output csv file, default fanfic.csv)
 - `--header 'Chrome/52 (Macintosh; Intel Mac OS X 10_10_5); Jingyi Li/UC Berkeley/email@address.com'` (an optional http header for ethical scraping)
 
