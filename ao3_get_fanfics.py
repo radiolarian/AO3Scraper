@@ -40,7 +40,7 @@ def get_tag_info(category, meta):
 		tag_list = meta.find("dd", class_=str(category) + ' tags').find_all(class_="tag")
 	except AttributeError as e:
 		return []
-	return [result.text.encode('ascii', 'ignore') for result in tag_list] 
+	return [result.text for result in tag_list] 
 	
 def get_stats(meta):
 	'''
@@ -68,7 +68,7 @@ def get_stats(meta):
 	if not status: status = 'Completed' 
 	else: status = status.text.strip(':')
 	stats.insert(2, status)
-	stats = list(map(lambda s: s.encode('ascii', 'ignore'), stats))
+#	stats = list(map(lambda s: s.encode('ascii', 'ignore'), stats))
 	
 	return stats      
 
@@ -88,7 +88,7 @@ def write_fic_to_csv(fic_id, writer, header_info=''):
 	and the fic content itself.
 	header_info should be the header info to encourage ethical scraping.
 	'''
-	print 'Scraping ', fic_id 
+	print('Scraping ', fic_id)
 	url = 'http://archiveofourown.org/works/'+str(fic_id)+'?view_adult=true&amp;view_full_work=true'
 	headers = {'user-agent' : header_info}
 	req = requests.get(url, headers=headers)
@@ -100,10 +100,10 @@ def write_fic_to_csv(fic_id, writer, header_info=''):
 	#get the fic itself
 	content = soup.find("div", id= "chapters")
 	chapters = content.select('p')
-	chaptertext = '\n\n'.join([chapter.text for chapter in chapters]).encode('ascii', 'ignore')
+	chaptertext = '\n\n'.join([chapter.text for chapter in chapters])
 	row = list(map(lambda x: ', '.join(x), tags)) + stats + [chaptertext]
 	writer.writerow(row)
-	print 'Done.'
+	print('Done.')
 	
 def get_args(): 
 	parser = argparse.ArgumentParser(description='Scrape and save some fanfic, given their AO3 IDs.')
@@ -130,7 +130,7 @@ def main():
 		writer = csv.writer(f_out)
 		#does the csv already exist? if not, let's write a header row.
 		if os.stat(csv_out).st_size == 0:
-			print 'header!!!!!!'
+			print('Writing a header.')
 			header = ['rating', 'category', 'fandom', 'relationship', 'character', 'additional tags', 'language', 'published', 'status', 'status date', 'words', 'chapters', 'comments', 'kudos', 'bookmarks', 'hits', 'body']
 			writer.writerow(header)
 
