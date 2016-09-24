@@ -27,3 +27,9 @@ If you don't want to give it a .csv file name, you can also query a single fic i
 By default, we save all chapters of multi-chapter fics. We cannot scrape fics that are locked (for registered users only), but submit a pull request if you want to do authentication! 
 
 Happy scraping! 
+
+##Improvements
+
+We love pull requests. Some known issues, all around data clean-up / CSV saving:
+- All fic content is converted to ASCII, which strips quotations if they're curly (’ instead of '). CSV writer should be able to support unicode.
+- Viewing the csv in Excel causes some weird line break issues in fic content. (Viewing it in the Mac preview viewer is fine).
