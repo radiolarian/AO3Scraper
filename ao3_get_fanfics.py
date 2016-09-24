@@ -21,7 +21,7 @@
 # Note that by default, the script appends to existing csvs instead of overwriting them.
 #
 # Author: Jingyi Li soundtracknoon [at] gmail
-# I wrote this in Python 2.7 (hence all the unicode->ascii CSV conversion). 9/23/16
+# I wrote this in Python 2.7. 9/23/16
 #
 #######
 
@@ -40,7 +40,7 @@ def get_tag_info(category, meta):
 		tag_list = meta.find("dd", class_=str(category) + ' tags').find_all(class_="tag")
 	except AttributeError as e:
 		return []
-	return [result.text for result in tag_list] 
+	return [result.text.encode('ascii', 'ignore') for result in tag_list] 
 	
 def get_stats(meta):
 	'''
@@ -68,7 +68,7 @@ def get_stats(meta):
 	if not status: status = 'Completed' 
 	else: status = status.text.strip(':')
 	stats.insert(2, status)
-#	stats = list(map(lambda s: s.encode('ascii', 'ignore'), stats))
+	stats = list(map(lambda s: s.encode('ascii', 'ignore'), stats))
 	
 	return stats      
 
@@ -100,7 +100,7 @@ def write_fic_to_csv(fic_id, writer, header_info=''):
 	#get the fic itself
 	content = soup.find("div", id= "chapters")
 	chapters = content.select('p')
-	chaptertext = '\n\n'.join([chapter.text for chapter in chapters])
+	chaptertext = '\n\n'.join([chapter.text for chapter in chapters]).encode('ascii', 'ignore')
 	row = list(map(lambda x: ', '.join(x), tags)) + stats + [chaptertext]
 	writer.writerow(row)
 	print('Done.')
