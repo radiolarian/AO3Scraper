@@ -16,7 +16,7 @@ Let's say you wanted to collect data from the first 100 English completed fics, 
 
 We get this URL as a result: http://archiveofourown.org/works?utf8=%E2%9C%93&work_search%5Bsort_column%5D=kudos_count&work_search%5Bother_tag_names%5D=&work_search%5Bquery%5D=&work_search%5Blanguage_id%5D=1&work_search%5Bcomplete%5D=0&work_search%5Bcomplete%5D=1&commit=Sort+and+Filter&tag_id=Sherlock+%28TV%29 
 
-Run `python ao3_work_ids.py`. The command line interface will ask you for this URL, and a .csv output file (let's call it sherlock.csv).
+Run `python ao3_work_ids.py`. The command line interface will ask you for this URL, how many fics IDs you want (100), and a .csv output file (let's call it sherlock.csv).
 
 Now, to actually get the fics, run `python ao3_get_fanfics.py sherlock.csv`. You can optionally add some flags: 
 - `--csv output.csv` (the name of the output csv file, default fanfic.csv)
