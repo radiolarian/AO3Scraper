@@ -105,7 +105,7 @@ def update_url_to_next_page():
 # 
 def write_ids_to_csv(ids):
 	global num_recorded_fic
-	with open(csv_name, 'a') as csvfile:
+	with open(csv_name + ".csv", 'a') as csvfile:
 	    wr = csv.writer(csvfile, delimiter=',')
 	    for id in ids:
 			if (not_finished()):
@@ -123,7 +123,7 @@ def not_finished():
 	if (num_requested_fic == -1):
 		return True
 	else:
-		if (num_requested_fic >= num_recorded_fic):
+		if (num_recorded_fic < num_requested_fic):
 			return True
 		else:
 			return False
