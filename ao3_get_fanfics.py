@@ -106,11 +106,12 @@ def write_fic_to_csv(fic_id, writer, header_info=''):
 		meta = soup.find("dl", class_="work meta group")
 		tags = get_tags(meta)
 		stats = get_stats(meta)
+		title = unicode(soup.find("h2", class_="title heading").string).strip()
 		#get the fic itself
 		content = soup.find("div", id= "chapters")
 		chapters = content.select('p')
 		chaptertext = '\n\n'.join([chapter.text for chapter in chapters]).encode('ascii', 'ignore')
-		row = list(map(lambda x: ', '.join(x), tags)) + stats + [chaptertext]
+		row = [fic_id] + [title] + list(map(lambda x: ', '.join(x), tags)) + stats + [chaptertext]
 		writer.writerow(row)
 		print('Done.')
 
@@ -141,7 +142,7 @@ def main():
 		#does the csv already exist? if not, let's write a header row.
 		if os.stat(csv_out).st_size == 0:
 			print('Writing a header.')
-			header = ['rating', 'category', 'fandom', 'relationship', 'character', 'additional tags', 'language', 'published', 'status', 'status date', 'words', 'chapters', 'comments', 'kudos', 'bookmarks', 'hits', 'body']
+			header = ['work_id', 'title', 'rating', 'category', 'fandom', 'relationship', 'character', 'additional tags', 'language', 'published', 'status', 'status date', 'words', 'chapters', 'comments', 'kudos', 'bookmarks', 'hits', 'body']
 			writer.writerow(header)
 
 		if is_csv:
