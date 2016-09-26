@@ -80,6 +80,12 @@ def get_tags(meta):
 	tags = ['rating', 'category', 'fandom', 'relationship', 'character', 'freeform']
 	return list(map(lambda tag: get_tag_info(tag, meta), tags))
 
+
+def access_denied(soup):
+	if (soup.find(class_="flash error")):
+		return True
+	return False
+
 def write_fic_to_csv(fic_id, writer, header_info=''):
 	'''
 	fic_id is the AO3 ID of a fic, found every URL /works/[id].
@@ -94,16 +100,20 @@ def write_fic_to_csv(fic_id, writer, header_info=''):
 	req = requests.get(url, headers=headers)
 	src = req.text
 	soup = BeautifulSoup(src, 'html.parser')
-	meta = soup.find("dl", class_="work meta group")
-	tags = get_tags(meta)
-	stats = get_stats(meta)
-	#get the fic itself
-	content = soup.find("div", id= "chapters")
-	chapters = content.select('p')
-	chaptertext = '\n\n'.join([chapter.text for chapter in chapters]).encode('ascii', 'ignore')
-	row = list(map(lambda x: ', '.join(x), tags)) + stats + [chaptertext]
-	writer.writerow(row)
-	print('Done.')
+	if (access_denied(soup)):
+		print('Access Denied')
+	else:
+		meta = soup.find("dl", class_="work meta group")
+		tags = get_tags(meta)
+		stats = get_stats(meta)
+		#get the fic itself
+		content = soup.find("div", id= "chapters")
+		chapters = content.select('p')
+		chaptertext = '\n\n'.join([chapter.text for chapter in chapters]).encode('ascii', 'ignore')
+		row = list(map(lambda x: ', '.join(x), tags)) + stats + [chaptertext]
+		writer.writerow(row)
+		print('Done.')
+
 	
 def get_args(): 
 	parser = argparse.ArgumentParser(description='Scrape and save some fanfic, given their AO3 IDs.')
