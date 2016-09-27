@@ -9,6 +9,7 @@ import time
 import requests
 import csv
 import sys
+import datetime
 
 url = ""
 num_requested_fic = 0
@@ -134,7 +135,7 @@ def not_finished():
 # 
 def make_readme():
 	with open(csv_name + "_readme.txt", "w") as text_file:
-		text_file.write("url: " + url + "\n" + "num_requested_fic: " + str(num_requested_fic))
+		text_file.write("url: " + url + "\n" + "num_requested_fic: " + str(num_requested_fic) + "\n" + "retreived on: " + str(datetime.datetime.now()))
 
 
 def main():
