@@ -115,7 +115,6 @@ def write_fic_to_csv(fic_id, writer, header_info=''):
 		writer.writerow(row)
 		print('Done.')
 
-	
 def get_args(): 
 	parser = argparse.ArgumentParser(description='Scrape and save some fanfic, given their AO3 IDs.')
 	parser.add_argument(
@@ -127,15 +126,30 @@ def get_args():
 	parser.add_argument(
 		'--header', default='',
 		help='user http header')
+	parser.add_argument(
+		'--restart', default='', 
+		help='work_id to start at from within a csv')
 	args = parser.parse_args()
 	fic_ids = args.ids
 	is_csv = (len(fic_ids) == 1 and '.csv' in fic_ids[0]) 
 	csv_out = str(args.csv)
 	headers = str(args.header)
-	return fic_ids, csv_out, headers, is_csv
+	restart = str(args.restart)
+	return fic_ids, csv_out, headers, restart, is_csv
+
+'''
+
+'''
+def process_id(fic_id, restart, found):
+	if found:
+		return True
+	if fic_id == restart:
+		return True
+	else:
+		return False
 
 def main():
-	fic_ids, csv_out, headers, is_csv = get_args()
+	fic_ids, csv_out, headers, restart, is_csv = get_args()
 	os.chdir(os.getcwd())
 	with open(csv_out, 'a') as f_out:
 		writer = csv.writer(f_out)
@@ -144,14 +158,24 @@ def main():
 			print('Writing a header.')
 			header = ['work_id', 'title', 'rating', 'category', 'fandom', 'relationship', 'character', 'additional tags', 'language', 'published', 'status', 'status date', 'words', 'chapters', 'comments', 'kudos', 'bookmarks', 'hits', 'body']
 			writer.writerow(header)
-
 		if is_csv:
 			csv_fname = fic_ids[0]
 			with open(csv_fname, 'r+') as f_in:
 				reader = csv.reader(f_in)
-				for row in reader:
-					write_fic_to_csv(row[0], writer)
-					time.sleep(1)
+				if restart is '':
+					for row in reader:
+						write_fic_to_csv(row[0], writer)
+						time.sleep(1)
+				else: 
+					found_restart = False
+					for row in reader:
+						found_restart = process_id(row[0], restart, found_restart)
+						if found_restart:
+							write_fic_to_csv(row[0], writer)
+							time.sleep(1)
+						else:
+							print "skipping already processed fic"
+
 		else:
 			for fic_id in fic_ids:
 				write_fic_to_csv(fic_id, writer)
