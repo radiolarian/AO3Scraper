@@ -34,6 +34,7 @@ import argparse
 import time
 import os
 import csv
+import sys
 
 def get_tag_info(category, meta):
 	'''
@@ -89,7 +90,7 @@ def access_denied(soup):
 		return True
 	return False
 
-def write_fic_to_csv(fic_id, writer, header_info=''):
+def write_fic_to_csv(fic_id, writer, errorwriter, header_info=''):
 	'''
 	fic_id is the AO3 ID of a fic, found every URL /works/[id].
 	writer is a csv writer object
@@ -115,7 +116,12 @@ def write_fic_to_csv(fic_id, writer, header_info=''):
 		chapters = content.select('p')
 		chaptertext = '\n\n'.join([chapter.text for chapter in chapters]).encode('ascii', 'ignore')
 		row = [fic_id] + [title] + list(map(lambda x: ', '.join(x), tags)) + stats + [chaptertext]
-		writer.writerow(row)
+		try:
+			writer.writerow(row)
+		except:
+			print("Unexpected error: ", sys.exc_info()[0])
+			error_row = [row[0]] +  [sys.exc_info()[0]]
+			errorwriter.writerow(error_row)
 		print('Done.')
 
 def get_args(): 
@@ -156,32 +162,34 @@ def main():
 	os.chdir(os.getcwd())
 	with open(csv_out, 'a') as f_out:
 		writer = csv.writer(f_out)
-		#does the csv already exist? if not, let's write a header row.
-		if os.stat(csv_out).st_size == 0:
-			print('Writing a header.')
-			header = ['work_id', 'title', 'rating', 'category', 'fandom', 'relationship', 'character', 'additional tags', 'language', 'published', 'status', 'status date', 'words', 'chapters', 'comments', 'kudos', 'bookmarks', 'hits', 'body']
-			writer.writerow(header)
-		if is_csv:
-			csv_fname = fic_ids[0]
-			with open(csv_fname, 'r+') as f_in:
-				reader = csv.reader(f_in)
-				if restart is '':
-					for row in reader:
-						write_fic_to_csv(row[0], writer)
-						time.sleep(1)
-				else: 
-					found_restart = False
-					for row in reader:
-						found_restart = process_id(row[0], restart, found_restart)
-						if found_restart:
-							write_fic_to_csv(row[0], writer)
+		with open("errors_" + csv_out, 'a') as e_out:
+			errorwriter = csv.writer(e_out)
+			#does the csv already exist? if not, let's write a header row.
+			if os.stat(csv_out).st_size == 0:
+				print('Writing a header.')
+				header = ['work_id', 'title', 'rating', 'category', 'fandom', 'relationship', 'character', 'additional tags', 'language', 'published', 'status', 'status date', 'words', 'chapters', 'comments', 'kudos', 'bookmarks', 'hits', 'body']
+				writer.writerow(header)
+			if is_csv:
+				csv_fname = fic_ids[0]
+				with open(csv_fname, 'r+') as f_in:
+					reader = csv.reader(f_in)
+					if restart is '':
+						for row in reader:
+							write_fic_to_csv(row[0], writer, errorwriter)
 							time.sleep(1)
-						else:
-							print "skipping already processed fic"
+					else: 
+						found_restart = False
+						for row in reader:
+							found_restart = process_id(row[0], restart, found_restart)
+							if found_restart:
+								write_fic_to_csv(row[0], writer, errorwriter)
+								time.sleep(1)
+							else:
+								print "skipping already processed fic"
 
-		else:
-			for fic_id in fic_ids:
-				write_fic_to_csv(fic_id, writer)
-				time.sleep(1)
+			else:
+				for fic_id in fic_ids:
+					write_fic_to_csv(fic_id, writer, errorwriter)
+					time.sleep(1)
 
 main()
