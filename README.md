@@ -5,6 +5,7 @@ In collaboration with [@ssterman](https://github.com/ssterman). A simple Python 
 Features:
 - Given a fandom URL and amount of fic you want, returns a list of the fic IDs. (ao3_work_ids.py)
 - Given a (list of) fic ID(s), saves a CSV of all the fic metadata and content. (ao3_get_fanfics.py)
+- Given the CSV created by ao3_get_fanfics.py, creates a folder of individual text files containing the body of each fic (csv_to_txts.py)
 
 ## Dependencies
 - pip install bs4
