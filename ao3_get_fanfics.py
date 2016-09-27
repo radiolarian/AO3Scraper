@@ -106,6 +106,8 @@ def write_fic_to_csv(fic_id, writer, errorwriter, header_info=''):
 	soup = BeautifulSoup(src, 'html.parser')
 	if (access_denied(soup)):
 		print('Access Denied')
+		error_row = [fic_id] + ['Access Denied']
+		errorwriter.writerow(error_row)
 	else:
 		meta = soup.find("dl", class_="work meta group")
 		tags = get_tags(meta)
@@ -120,7 +122,7 @@ def write_fic_to_csv(fic_id, writer, errorwriter, header_info=''):
 			writer.writerow(row)
 		except:
 			print("Unexpected error: ", sys.exc_info()[0])
-			error_row = [row[0]] +  [sys.exc_info()[0]]
+			error_row = [fic_id] +  [sys.exc_info()[0]]
 			errorwriter.writerow(error_row)
 		print('Done.')
 
