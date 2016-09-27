@@ -19,6 +19,9 @@
 # --csv is an optional string which specifies the name of your
 # csv output file. If left blank, it will be called "fanfics.csv"
 # Note that by default, the script appends to existing csvs instead of overwriting them.
+# 
+# --restart is an optional string which when used in combination with a csv input will start
+# the scraping from the given work_id, skipping all previous rows in the csv
 #
 # Author: Jingyi Li soundtracknoon [at] gmail
 # I wrote this in Python 2.7. 9/23/16
