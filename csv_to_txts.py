@@ -15,8 +15,8 @@ def main():
 	csv_name = raw_input("What is the csv called?  ")
 	
 	# clean extension
-	if ".csv" in csv_name:
-		csv_name = csv_name[:-4]
+	if ".csv" not in csv_name:
+		csv_name = csv_name + ".csv"
 
 	with open(csv_name, 'rb') as csvfile:
 		folder_name = csv_name + "_text_files"
