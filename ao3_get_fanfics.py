@@ -88,6 +88,8 @@ def get_tags(meta):
 def access_denied(soup):
 	if (soup.find(class_="flash error")):
 		return True
+	if (not soup.find(class_="work meta group")):
+		return True
 	return False
 
 def write_fic_to_csv(fic_id, writer, errorwriter, header_info=''):
