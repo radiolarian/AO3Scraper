@@ -5,6 +5,7 @@ In collaboration with [@ssterman](https://github.com/ssterman). A simple Python 
 Features:
 - Given a fandom URL and amount of fic you want, returns a list of the fic IDs. (ao3_work_ids.py)
 - Given a (list of) fic ID(s), saves a CSV of all the fic metadata and content. (ao3_get_fanfics.py)
+- Given the CSV of fic metadata and content, saves a new CSV of only the metadata. (extract_metadata.py)
 - Given the CSV created by ao3_get_fanfics.py, creates a folder of individual text files containing the body of each fic (csv_to_txts.py)
 
 ## Dependencies
@@ -28,6 +29,8 @@ If you don't want to give it a .csv file name, you can also query a single fic i
 If you stop a scrape from a csv partway through (or it crashes), you can restart from the last uncollected work_id using the flag `--restart 012345` (the work_id).  The scraper will skip all ids up to that point in the csv, then begin again from the given id. 
 
 By default, we save all chapters of multi-chapter fics. We cannot scrape fics that are locked (for registered users only), but submit a pull request if you want to do authentication! 
+
+Note that the 5 second delays before requesting from AO3's server are in compliance with the AO3 terms of service.  Please do not remove these delays.  
 
 Happy scraping! 
 
