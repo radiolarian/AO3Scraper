@@ -142,6 +142,8 @@ def main():
 	get_user_params()
 	make_readme()
 	while(not_finished()):
+		# 5 second delay between requests as per AO3's terms of service
+		time.sleep(5)
 		ids = get_ids()
 		# if the current page is empty, you've run out of fic
 		if (len(ids) is 0):
