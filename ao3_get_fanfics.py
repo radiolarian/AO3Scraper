@@ -35,6 +35,7 @@ import time
 import os
 import csv
 import sys
+from unidecode import unidecode
 
 def get_tag_info(category, meta):
 	'''
@@ -44,7 +45,7 @@ def get_tag_info(category, meta):
 		tag_list = meta.find("dd", class_=str(category) + ' tags').find_all(class_="tag")
 	except AttributeError as e:
 		return []
-	return [result.text.encode('ascii', 'ignore') for result in tag_list] 
+	return [unidecode(result.text) for result in tag_list] 
 	
 def get_stats(meta):
 	'''
@@ -58,11 +59,11 @@ def get_stats(meta):
 	if not stats[2]:
 		stats[2] = stats[1] #no explicit completed field -- one shot
 	try:		
-		stats = [stat.text for stat in stats]
+		stats = [unidecode(stat.text) for stat in stats]
 	except AttributeError as e: #for some reason, AO3 sometimes miss stat tags (like hits)
 		new_stats = []
 		for stat in stats:
-			if stat: new_stats.append(stat.text)
+			if stat: new_stats.append(unidecode(stat.text))
 			else: new_stats.append('null')
 		stats = new_stats
 
@@ -72,7 +73,6 @@ def get_stats(meta):
 	if not status: status = 'Completed' 
 	else: status = status.text.strip(':')
 	stats.insert(2, status)
-	stats = list(map(lambda s: s.encode('ascii', 'ignore'), stats))
 	
 	return stats      
 
@@ -114,11 +114,11 @@ def write_fic_to_csv(fic_id, writer, errorwriter, header_info=''):
 		meta = soup.find("dl", class_="work meta group")
 		tags = get_tags(meta)
 		stats = get_stats(meta)
-		title = unicode(soup.find("h2", class_="title heading").string).strip()
+		title = unidecode(soup.find("h2", class_="title heading").string).strip()
 		#get the fic itself
 		content = soup.find("div", id= "chapters")
 		chapters = content.select('p')
-		chaptertext = '\n\n'.join([chapter.text for chapter in chapters]).encode('ascii', 'ignore')
+		chaptertext = '\n\n'.join([unidecode(chapter.text) for chapter in chapters])
 		row = [fic_id] + [title] + list(map(lambda x: ', '.join(x), tags)) + stats + [chaptertext]
 		try:
 			writer.writerow(row)

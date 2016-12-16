@@ -11,6 +11,7 @@ Features:
 ## Dependencies
 - pip install bs4
 - pip install requests
+- pip install unidecode
 
 ## Example Usage
 
