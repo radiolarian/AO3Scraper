@@ -15,9 +15,9 @@ def main():
 
 	ids_seen = []
 
-	with open(csv_name, 'rb') as csvfile:
+	with open(csv_name, 'rU') as csvfile:
 		with open(csv_name[:-4] + "_metadata.csv", 'a') as metacsv:
-			rd = csv.reader(csvfile, delimiter=',', quotechar='"')
+			rd = csv.reader(csvfile, dialect=csv.excel_tab, delimiter=',', quotechar='"')
 			wr = csv.writer(metacsv, delimiter=',', quotechar='"')
 			for row in rd:
 				work_id = row[0]

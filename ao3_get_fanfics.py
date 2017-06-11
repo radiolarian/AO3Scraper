@@ -101,7 +101,9 @@ def write_fic_to_csv(fic_id, writer, errorwriter, header_info=''):
 	header_info should be the header info to encourage ethical scraping.
 	'''
 	print('Scraping ', fic_id)
-	url = 'http://archiveofourown.org/works/'+str(fic_id)+'?view_adult=true&amp;view_full_work=true'
+	url = 'http://archiveofourown.org/works/'+str(fic_id)+'?view_adult=true'
+	# if not only_first_chap:
+	# 	url = url + '&amp;view_full_work=true'
 	headers = {'user-agent' : header_info}
 	req = requests.get(url, headers=headers)
 	src = req.text
@@ -142,13 +144,21 @@ def get_args():
 	parser.add_argument(
 		'--restart', default='', 
 		help='work_id to start at from within a csv')
+	parser.add_argument(
+		'--firstchap', default='', 
+		help='only retrieve first chapter of multichapter fics')
 	args = parser.parse_args()
 	fic_ids = args.ids
 	is_csv = (len(fic_ids) == 1 and '.csv' in fic_ids[0]) 
 	csv_out = str(args.csv)
 	headers = str(args.header)
 	restart = str(args.restart)
-	return fic_ids, csv_out, headers, restart, is_csv
+	ofc = str(args.firstchap)
+	if ofc != "":
+		ofc = True
+	else:
+		ofc = False
+	return fic_ids, csv_out, headers, restart, is_csv, ofc
 
 '''
 
@@ -162,7 +172,7 @@ def process_id(fic_id, restart, found):
 		return False
 
 def main():
-	fic_ids, csv_out, headers, restart, is_csv = get_args()
+	fic_ids, csv_out, headers, restart, is_csv, only_first_chap = get_args()
 	os.chdir(os.getcwd())
 	with open(csv_out, 'a') as f_out:
 		writer = csv.writer(f_out)

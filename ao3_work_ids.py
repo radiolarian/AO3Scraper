@@ -15,6 +15,9 @@ url = ""
 num_requested_fic = 0
 num_recorded_fic = 0
 csv_name = ""
+multichap_only = ""
+
+seen_ids = []
 
 # 
 # Ask the user for:
@@ -29,6 +32,7 @@ def get_user_params():
     global url
     global csv_name
     global num_requested_fic
+    global multichap_only
     # user input the url
     while (url == ""):
         url = raw_input("What URL should we scrape? ")
@@ -46,6 +50,13 @@ def get_user_params():
     while (csv_name == ""):
         csv_name = raw_input("What should we call the output csv? ")
 
+    while (multichap_only == ""):
+        multichap_only = raw_input("multichapter only? y/n   ")
+        if (multichap_only == 'y'):
+            multichap_only = True
+        else:
+            multichap_only = False
+
 # 
 # navigate to a works listed page,
 # then extract all work ids
@@ -59,9 +70,21 @@ def get_ids():
     works = soup.find_all(class_="work blurb group")
     ids = []
     for tag in works:
-        t = tag.get('id')
-        t = t[5:]
-        ids.append(t)
+        if (multichap_only):
+            # FOR MULTICHAP ONLY
+            chaps = tag.find('dd', class_="chapters")
+            if (chaps.text != u"1/1"):
+                t = tag.get('id')
+                t = t[5:]
+                if not t in seen_ids:
+                    ids.append(t)
+                    seen_ids.append(t)
+        else:
+            t = tag.get('id')
+            t = t[5:]
+            if not t in seen_ids:
+                ids.append(t)
+                seen_ids.append(t)
     return ids
 
 # 
@@ -146,8 +169,8 @@ def main():
         time.sleep(5)
         ids = get_ids()
         # if the current page is empty, you've run out of fic
-        if (len(ids) is 0):
-            break
+        # if (len(seen_ids) is not num_requested_fic):
+        #   break
         write_ids_to_csv(ids)
         update_url_to_next_page()
     print "That's all, folks"
