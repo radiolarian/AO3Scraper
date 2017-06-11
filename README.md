@@ -11,6 +11,7 @@ Features:
 ## Dependencies
 - pip install bs4
 - pip install requests
+- pip install unidecode
 
 ## Example Usage
 
@@ -37,6 +38,9 @@ Happy scraping!
 ##Improvements
 
 We love pull requests. Some known issues, all around data clean-up / CSV saving:
-- All fic content is converted to ASCII, which strips quotations if they're curly (’ instead of '). CSV writer should be able to support unicode. 
-- Related: without unicode, it cannot scrape non-English characters, e.g. fics in Chinese.  These are currently skipped and the ids saved to a separate csv
+- While basic unicode stripping works (thanks, [@kolvia!](http://github.com/kolvia)), we still cannot handle the majority of non-English characters, e.g. fics in Chinese.  These are currently skipped and the ids saved to a separate csv.
 - Viewing the csv in Excel causes some weird line break issues in fic content. (Viewing it in the Mac preview viewer is fine).
+
+##FF.net
+
+Want to scrape fanfiction.net? Check out my friend [@smilli](https://github.com/smilli/)'s [ff.net scraper](https://github.com/smilli/fanfiction)! 
