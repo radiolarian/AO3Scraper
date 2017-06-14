@@ -11,12 +11,17 @@ import csv
 import sys
 import datetime
 
+page_empty = False
 url = ""
 num_requested_fic = 0
 num_recorded_fic = 0
 csv_name = ""
 multichap_only = ""
+tag_csv = ""
 
+# keep track of all processed ids to avoid repeats:
+# this is separate from the temporary batch of ids
+# that are written to the csv and then forgotten
 seen_ids = []
 
 # 
@@ -56,18 +61,28 @@ def get_user_params():
             multichap_only = True
         else:
             multichap_only = False
+    
+    tag_csv = raw_input("Tag CSV:")
 
 # 
 # navigate to a works listed page,
 # then extract all work ids
 # 
 def get_ids():
+    global page_empty
     req = requests.get(url)
     soup = BeautifulSoup(req.text, "lxml")
+
     # some responsiveness in the "UI"
     sys.stdout.write('.')
     sys.stdout.flush()
     works = soup.find_all(class_="work blurb group")
+
+    # see if we've gone too far and run out of fic: 
+    if (len(works) is 0):
+        page_empty = True
+
+    # process list for new fic ids
     ids = []
     for tag in works:
         if (multichap_only):
@@ -141,9 +156,13 @@ def write_ids_to_csv(ids):
 # 
 # if you want everything, you're not done
 # otherwise compare recorded against requested.
-# recorded doesn't update until it's actually written to the csv
+# recorded doesn't update until it's actually written to the csv.
+# If you've gone too far and there are no more fic, end. 
 # 
 def not_finished():
+    if (page_empty):
+        return False
+
     if (num_requested_fic == -1):
         return True
     else:
@@ -168,9 +187,6 @@ def main():
         # 5 second delay between requests as per AO3's terms of service
         time.sleep(5)
         ids = get_ids()
-        # if the current page is empty, you've run out of fic
-        # if (len(seen_ids) is not num_requested_fic):
-        #   break
         write_ids_to_csv(ids)
         update_url_to_next_page()
     print "That's all, folks"
