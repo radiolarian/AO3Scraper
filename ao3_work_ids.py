@@ -12,12 +12,13 @@ import sys
 import datetime
 
 page_empty = False
+base_url = ""
 url = ""
 num_requested_fic = 0
 num_recorded_fic = 0
 csv_name = ""
 multichap_only = ""
-tag_csv = ""
+tags = []
 
 # keep track of all processed ids to avoid repeats:
 # this is separate from the temporary batch of ids
@@ -33,14 +34,20 @@ seen_ids = []
 # how many fics they want
 # what to call the output csv
 # 
+# If you would like to add additional search terms (that is should contain at least one of, but not necessarily all of)
+# specify these in the tag csv. 
+
 def get_user_params():
+    global base_url
     global url
     global csv_name
     global num_requested_fic
     global multichap_only
+    global tags
     # user input the url
-    while (url == ""):
-        url = raw_input("What URL should we scrape? ")
+    while (base_url == ""):
+        base_url = raw_input("What URL should we scrape? ")
+        url = base_url
 
     # how many fic?
     nqf = ""
@@ -62,7 +69,12 @@ def get_user_params():
         else:
             multichap_only = False
     
-    tag_csv = raw_input("Tag CSV:")
+    tag_csv = raw_input("Tag csv:")
+    if (tag_csv):
+        with open(tag_csv, "r") as tags_f:
+            tags_reader = csv.reader(tags_f)
+            for row in tags_reader:
+                tags.append(row[0])
 
 # 
 # navigate to a works listed page,
@@ -136,6 +148,18 @@ def update_url_to_next_page():
             url = url + "?page=2"
 
 
+# modify the base_url to include the new tag, and save to global url
+def add_tag_to_url(tag):
+    global url
+    key = "&work_search%5Bother_tag_names%5D="
+    if (base_url.find(key)):
+        start = base_url.find(key) + len(key)
+        new_url = base_url[:start] + tag + "%2C" + base_url[start:]
+        url = new_url
+    else:
+        url = base_url + "&work_search%5Bother_tag_names%5D=" + tag
+
+
 # 
 # after every page, write the gathered ids
 # to the csv, so a crash doesn't lose everything.
@@ -179,16 +203,29 @@ def make_readme():
     with open(csv_name + "_readme.txt", "w") as text_file:
         text_file.write("url: " + url + "\n" + "num_requested_fic: " + str(num_requested_fic) + "\n" + "retreived on: " + str(datetime.datetime.now()))
 
+# reset flags to run again
+# note: do not reset seen_ids
+def reset():
+    global page_empty
+    global num_recorded_fic
+    page_empty = False
+    num_recorded_fic = 0
 
 def main():
     get_user_params()
     make_readme()
-    while(not_finished()):
-        # 5 second delay between requests as per AO3's terms of service
-        time.sleep(5)
-        ids = get_ids()
-        write_ids_to_csv(ids)
-        update_url_to_next_page()
+
+    if (len(tags)):
+        for t in tags:
+            print "Getting tag: " + t
+            reset()
+            add_tag_to_url(t)
+            while(not_finished()):
+                # 5 second delay between requests as per AO3's terms of service
+                time.sleep(5)
+                ids = get_ids()
+                write_ids_to_csv(ids)
+                update_url_to_next_page()
     print "That's all, folks"
 
 
