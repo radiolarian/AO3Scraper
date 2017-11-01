@@ -15,6 +15,7 @@ import requests
 import csv
 import sys
 import datetime
+import argparse
 
 page_empty = False
 base_url = ""
@@ -42,39 +43,51 @@ seen_ids = []
 # If you would like to add additional search terms (that is should contain at least one of, but not necessarily all of)
 # specify these in the tag csv, one per row. 
 
-def get_user_params():
+def get_args():
     global base_url
     global url
     global csv_name
     global num_requested_fic
     global multichap_only
     global tags
-    # user input the url
-    while (base_url == ""):
-        base_url = raw_input("What URL should we scrape? ")
-        url = base_url
 
-    # how many fic?
-    nqf = ""
-    while (nqf == ""):
-        nqf = raw_input("How many fic do you want? (for all, enter 'a')  " )
+    parser = argparse.ArgumentParser(description='Scrape AO3 work IDs given a search URL')
+    parser.add_argument(
+        'url', metavar='URL',
+        help='a single URL pointing to an AO3 search page')
+    parser.add_argument(
+        '--out_csv', default='work_ids',
+        help='csv output file name')
+    parser.add_argument(
+        '--header', default='',
+        help='user http header')
+    parser.add_argument(
+        '--num_to_retrieve', default='a', 
+        help='how many fic ids you want')
+    parser.add_argument(
+        '--multichapter_only', default='', 
+        help='only retrieve ids for multichapter fics')
+    parser.add_argument(
+        '--tag_csv', default='',
+        help='provide an optional list of tags; the retrieved fics must have one or more such tags')
 
-    if nqf == "a":
+    args = parser.parse_args()
+    url = args.url
+    csv_name = str(args.out_csv)
+    
+    # defaults to all
+    if (str(args.num_to_retrieve) is 'a'):
         num_requested_fic = -1
     else:
-        num_requested_fic = int(nqf)
+        num_requested_fic = int(args.num_to_retrieve)
 
-    while (csv_name == ""):
-        csv_name = raw_input("What should we call the output csv? ")
+    multichap_only = str(args.multichapter_only)
+    if multichap_only != "":
+        multichap_only = True
+    else:
+        multichap_only = False
 
-    while (multichap_only == ""):
-        multichap_only = raw_input("multichapter only? y/n   ")
-        if (multichap_only == 'y'):
-            multichap_only = True
-        else:
-            multichap_only = False
-    
-    tag_csv = raw_input("Tag csv: ")
+    tag_csv = str(args.tag_csv)
     if (tag_csv):
         with open(tag_csv, "r") as tags_f:
             tags_reader = csv.reader(tags_f)
@@ -225,8 +238,10 @@ def process_for_ids():
         update_url_to_next_page()
 
 def main():
-    get_user_params()
+    get_args()
     make_readme()
+
+    print "processing...\n"
 
     if (len(tags)):
         for t in tags:
@@ -238,6 +253,5 @@ def main():
         process_for_ids()
 
     print "That's all, folks"
-
 
 main()
