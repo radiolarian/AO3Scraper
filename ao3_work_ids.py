@@ -3,6 +3,11 @@
 # Saves ids to a csv for later use e.g. to retrieve fic text
 # this is for python 2.7 
 
+# Options:
+# Only retrieve multichapter fics
+# Modify search to include a list of tags
+#      (e.g. you want all fics tagged either "romance" or "fluff")
+
 from bs4 import BeautifulSoup
 import re
 import time
@@ -35,7 +40,7 @@ seen_ids = []
 # what to call the output csv
 # 
 # If you would like to add additional search terms (that is should contain at least one of, but not necessarily all of)
-# specify these in the tag csv. 
+# specify these in the tag csv, one per row. 
 
 def get_user_params():
     global base_url
@@ -69,7 +74,7 @@ def get_user_params():
         else:
             multichap_only = False
     
-    tag_csv = raw_input("Tag csv:")
+    tag_csv = raw_input("Tag csv: ")
     if (tag_csv):
         with open(tag_csv, "r") as tags_f:
             tags_reader = csv.reader(tags_f)
@@ -211,6 +216,14 @@ def reset():
     page_empty = False
     num_recorded_fic = 0
 
+def process_for_ids():
+    while(not_finished()):
+        # 5 second delay between requests as per AO3's terms of service
+        time.sleep(5)
+        ids = get_ids()
+        write_ids_to_csv(ids)
+        update_url_to_next_page()
+
 def main():
     get_user_params()
     make_readme()
@@ -220,12 +233,10 @@ def main():
             print "Getting tag: " + t
             reset()
             add_tag_to_url(t)
-            while(not_finished()):
-                # 5 second delay between requests as per AO3's terms of service
-                time.sleep(5)
-                ids = get_ids()
-                write_ids_to_csv(ids)
-                update_url_to_next_page()
+            process_for_ids()
+    else:
+        process_for_ids()
+
     print "That's all, folks"
 
 

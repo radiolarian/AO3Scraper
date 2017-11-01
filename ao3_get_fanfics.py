@@ -92,7 +92,7 @@ def access_denied(soup):
 		return True
 	return False
 
-def write_fic_to_csv(fic_id, writer, errorwriter, header_info=''):
+def write_fic_to_csv(fic_id, only_first_chap, writer, errorwriter, header_info=''):
 	'''
 	fic_id is the AO3 ID of a fic, found every URL /works/[id].
 	writer is a csv writer object
@@ -102,8 +102,8 @@ def write_fic_to_csv(fic_id, writer, errorwriter, header_info=''):
 	'''
 	print('Scraping ', fic_id)
 	url = 'http://archiveofourown.org/works/'+str(fic_id)+'?view_adult=true'
-	# if not only_first_chap:
-	# 	url = url + '&amp;view_full_work=true'
+	if not only_first_chap:
+		url = url + '&amp;view_full_work=true'
 	headers = {'user-agent' : header_info}
 	req = requests.get(url, headers=headers)
 	src = req.text
@@ -189,21 +189,21 @@ def main():
 					reader = csv.reader(f_in)
 					if restart is '':
 						for row in reader:
-							write_fic_to_csv(row[0], writer, errorwriter)
+							write_fic_to_csv(row[0], only_first_chap, writer, errorwriter)
 							time.sleep(1)
 					else: 
 						found_restart = False
 						for row in reader:
 							found_restart = process_id(row[0], restart, found_restart)
 							if found_restart:
-								write_fic_to_csv(row[0], writer, errorwriter)
+								write_fic_to_csv(row[0], only_first_chap, writer, errorwriter)
 								time.sleep(1)
 							else:
 								print "skipping already processed fic"
 
 			else:
 				for fic_id in fic_ids:
-					write_fic_to_csv(fic_id, writer, errorwriter)
+					write_fic_to_csv(fic_id, only_first_chap, writer, errorwriter)
 					time.sleep(1)
 
 main()
