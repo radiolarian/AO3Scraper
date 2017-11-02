@@ -18,6 +18,11 @@ def main():
 	print csv_names
 	
 	# clean extension
+<<<<<<< HEAD
+=======
+	if ".csv" not in csv_name:
+		csv_name = csv_name + ".csv"
+>>>>>>> 225c0f95c9d2b5158a05225ec79e1fbc43c74791
 
 
 	for csv_name in csv_names:

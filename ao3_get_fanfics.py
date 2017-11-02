@@ -35,6 +35,7 @@ import time
 import os
 import csv
 import sys
+from unidecode import unidecode
 
 def get_tag_info(category, meta):
 	'''
@@ -44,7 +45,7 @@ def get_tag_info(category, meta):
 		tag_list = meta.find("dd", class_=str(category) + ' tags').find_all(class_="tag")
 	except AttributeError as e:
 		return []
-	return [result.text.encode('ascii', 'ignore') for result in tag_list] 
+	return [unidecode(result.text) for result in tag_list] 
 	
 def get_stats(meta):
 	'''
@@ -58,11 +59,11 @@ def get_stats(meta):
 	if not stats[2]:
 		stats[2] = stats[1] #no explicit completed field -- one shot
 	try:		
-		stats = [stat.text for stat in stats]
+		stats = [unidecode(stat.text) for stat in stats]
 	except AttributeError as e: #for some reason, AO3 sometimes miss stat tags (like hits)
 		new_stats = []
 		for stat in stats:
-			if stat: new_stats.append(stat.text)
+			if stat: new_stats.append(unidecode(stat.text))
 			else: new_stats.append('null')
 		stats = new_stats
 
@@ -72,7 +73,6 @@ def get_stats(meta):
 	if not status: status = 'Completed' 
 	else: status = status.text.strip(':')
 	stats.insert(2, status)
-	stats = list(map(lambda s: s.encode('ascii', 'ignore'), stats))
 	
 	return stats      
 
@@ -88,9 +88,11 @@ def get_tags(meta):
 def access_denied(soup):
 	if (soup.find(class_="flash error")):
 		return True
+	if (not soup.find(class_="work meta group")):
+		return True
 	return False
 
-def write_fic_to_csv(fic_id, writer, errorwriter, header_info=''):
+def write_fic_to_csv(fic_id, only_first_chap, writer, errorwriter, header_info=''):
 	'''
 	fic_id is the AO3 ID of a fic, found every URL /works/[id].
 	writer is a csv writer object
@@ -99,7 +101,9 @@ def write_fic_to_csv(fic_id, writer, errorwriter, header_info=''):
 	header_info should be the header info to encourage ethical scraping.
 	'''
 	print('Scraping ', fic_id)
-	url = 'http://archiveofourown.org/works/'+str(fic_id)+'?view_adult=true&amp;view_full_work=true'
+	url = 'http://archiveofourown.org/works/'+str(fic_id)+'?view_adult=true'
+	if not only_first_chap:
+		url = url + '&amp;view_full_work=true'
 	headers = {'user-agent' : header_info}
 	req = requests.get(url, headers=headers)
 	src = req.text
@@ -112,11 +116,11 @@ def write_fic_to_csv(fic_id, writer, errorwriter, header_info=''):
 		meta = soup.find("dl", class_="work meta group")
 		tags = get_tags(meta)
 		stats = get_stats(meta)
-		title = unicode(soup.find("h2", class_="title heading").string).strip()
+		title = unidecode(soup.find("h2", class_="title heading").string).strip()
 		#get the fic itself
 		content = soup.find("div", id= "chapters")
 		chapters = content.select('p')
-		chaptertext = '\n\n'.join([chapter.text for chapter in chapters]).encode('ascii', 'ignore')
+		chaptertext = '\n\n'.join([unidecode(chapter.text) for chapter in chapters])
 		row = [fic_id] + [title] + list(map(lambda x: ', '.join(x), tags)) + stats + [chaptertext]
 		try:
 			writer.writerow(row)
@@ -140,13 +144,21 @@ def get_args():
 	parser.add_argument(
 		'--restart', default='', 
 		help='work_id to start at from within a csv')
+	parser.add_argument(
+		'--firstchap', default='', 
+		help='only retrieve first chapter of multichapter fics')
 	args = parser.parse_args()
 	fic_ids = args.ids
 	is_csv = (len(fic_ids) == 1 and '.csv' in fic_ids[0]) 
 	csv_out = str(args.csv)
 	headers = str(args.header)
 	restart = str(args.restart)
-	return fic_ids, csv_out, headers, restart, is_csv
+	ofc = str(args.firstchap)
+	if ofc != "":
+		ofc = True
+	else:
+		ofc = False
+	return fic_ids, csv_out, headers, restart, is_csv, ofc
 
 '''
 
@@ -160,7 +172,7 @@ def process_id(fic_id, restart, found):
 		return False
 
 def main():
-	fic_ids, csv_out, headers, restart, is_csv = get_args()
+	fic_ids, csv_out, headers, restart, is_csv, only_first_chap = get_args()
 	os.chdir(os.getcwd())
 	with open(csv_out, 'a') as f_out:
 		writer = csv.writer(f_out)
@@ -177,21 +189,21 @@ def main():
 					reader = csv.reader(f_in)
 					if restart is '':
 						for row in reader:
-							write_fic_to_csv(row[0], writer, errorwriter)
+							write_fic_to_csv(row[0], only_first_chap, writer, errorwriter)
 							time.sleep(1)
 					else: 
 						found_restart = False
 						for row in reader:
 							found_restart = process_id(row[0], restart, found_restart)
 							if found_restart:
-								write_fic_to_csv(row[0], writer, errorwriter)
+								write_fic_to_csv(row[0], only_first_chap, writer, errorwriter)
 								time.sleep(1)
 							else:
 								print "skipping already processed fic"
 
 			else:
 				for fic_id in fic_ids:
-					write_fic_to_csv(fic_id, writer, errorwriter)
+					write_fic_to_csv(fic_id, only_first_chap, writer, errorwriter)
 					time.sleep(1)
 
 main()
