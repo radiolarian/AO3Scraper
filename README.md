@@ -45,7 +45,7 @@ By default, we save all chapters of multi-chapter fics. Use `--firstchap 1` to o
 
 We cannot scrape fics that are locked (for registered users only), but submit a pull request if you want to build authentication! 
 
-** Note that the 5 second delays before requesting from AO3's server are in compliance with the AO3 terms of service.  Please do not remove these delays. **
+**Note that the 5 second delays before requesting from AO3's server are in compliance with the AO3 terms of service.  Please do not remove these delays.**
 
 Happy scraping! 
 
