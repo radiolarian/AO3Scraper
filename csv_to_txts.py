@@ -12,21 +12,34 @@ import os
 
 def main():
 	csv.field_size_limit(1000000000)  # up the field size because stories are long
-	csv_name = raw_input("What is the csv called?  ")
+	path = os.getcwd()
+	csv_names = [f for f in os.listdir(path) if '-fic.csv' in f]
+	csv_names = [f for f in csv_names if 'error' not in f]
+	print csv_names
 	
 	# clean extension
-	if ".csv" in csv_name:
-		csv_name = csv_name[:-4]
 
-	with open(csv_name, 'rb') as csvfile:
-		folder_name = csv_name + "_text_files"
-		if not os.path.exists(folder_name):
-			os.makedirs(folder_name)
-		rd = csv.reader(csvfile, delimiter=',', quotechar='"')
-		next(rd)  # skip the header row
-		for row in rd:
-			work_id = row[0]
-			with open(folder_name + "/" + row[0] + ".txt", "w") as text_file:
-				text_file.write(row[-1])
+
+	for csv_name in csv_names:
+		if ".csv" in csv_name:
+			csv_name_short = csv_name[:-4]
+		with open(csv_name, 'rb') as csvfile:
+			folder_name = csv_name_short + "_text_files"
+			if not os.path.exists(folder_name):
+				os.makedirs(folder_name)
+			rd = csv.reader(csvfile, delimiter=',', quotechar='"')
+			next(rd)  # skip the header row
+			for row in rd:
+				with open(folder_name + "/" + row[0] + ".txt", "w") as text_file:
+					text_file.write(row[-1])
+
+		#also, just write its stats in the new stats folder 		
+		with open(csv_name, 'rb') as csvfile, open("newstats/" + csv_name_short + '-stats.csv', 'wb') as stats_file:
+			rd = csv.reader(csvfile, delimiter=',', quotechar='"')
+			writer = csv.writer(stats_file, delimiter = ';')
+			for row in rd:
+				writer.writerow(row[:-1])
+
+		print 'done with ', csv_name
 
 main()
