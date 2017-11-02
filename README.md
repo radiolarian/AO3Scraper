@@ -21,7 +21,7 @@ Let's say you wanted to collect data from the first 100 English completed fics, 
 
 We get this URL as a result: http://archiveofourown.org/works?utf8=%E2%9C%93&work_search%5Bsort_column%5D=kudos_count&work_search%5Bother_tag_names%5D=&work_search%5Bquery%5D=&work_search%5Blanguage_id%5D=1&work_search%5Bcomplete%5D=0&work_search%5Bcomplete%5D=1&commit=Sort+and+Filter&tag_id=Sherlock+%28TV%29 
 
-Run `python ao3_work_ids.py \<url\>`. You can optionally add some flags: 
+Run `python ao3_work_ids.py <url>`. You can optionally add some flags: 
 - '--out_csv output.csv' (the name of the output csv file, default work_ids.csv)
 - '--num_to_retrieve 10' (how many work ids you want, defaults to all)
 - '--multichapter_only 1' (restricts output to only works with more than one chapter, defaults to false)
