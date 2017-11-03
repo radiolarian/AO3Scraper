@@ -25,7 +25,7 @@
 #
 # Author: Jingyi Li soundtracknoon [at] gmail
 # I wrote this in Python 2.7. 9/23/16
-#
+# TO DO MAKE SURE THIS IS PYTHON 3 COMPATIBLE LMAO 
 #######
 
 import requests
@@ -189,21 +189,21 @@ def main():
 					reader = csv.reader(f_in)
 					if restart is '':
 						for row in reader:
-							write_fic_to_csv(row[0], only_first_chap, writer, errorwriter)
+							write_fic_to_csv(row[0], only_first_chap, writer, errorwriter, headers)
 							time.sleep(1)
 					else: 
 						found_restart = False
 						for row in reader:
 							found_restart = process_id(row[0], restart, found_restart)
 							if found_restart:
-								write_fic_to_csv(row[0], only_first_chap, writer, errorwriter)
+								write_fic_to_csv(row[0], only_first_chap, writer, errorwriter, headers)
 								time.sleep(1)
 							else:
 								print "skipping already processed fic"
 
 			else:
 				for fic_id in fic_ids:
-					write_fic_to_csv(fic_id, only_first_chap, writer, errorwriter)
+					write_fic_to_csv(fic_id, only_first_chap, writer, errorwriter, headers)
 					time.sleep(1)
 
 main()
