@@ -246,7 +246,7 @@ def main():
     header_info = get_args()
     make_readme()
 
-    print "processing...\n"
+    print "processing..."
 
     if (len(tags)):
         for t in tags:
