@@ -173,6 +173,7 @@ def process_id(fic_id, restart, found):
 
 def main():
 	fic_ids, csv_out, headers, restart, is_csv, only_first_chap = get_args()
+	delay = 5
 	os.chdir(os.getcwd())
 	with open(csv_out, 'a') as f_out:
 		writer = csv.writer(f_out)
@@ -190,20 +191,20 @@ def main():
 					if restart is '':
 						for row in reader:
 							write_fic_to_csv(row[0], only_first_chap, writer, errorwriter)
-							time.sleep(1)
+							time.sleep(delay)
 					else: 
 						found_restart = False
 						for row in reader:
 							found_restart = process_id(row[0], restart, found_restart)
 							if found_restart:
 								write_fic_to_csv(row[0], only_first_chap, writer, errorwriter)
-								time.sleep(1)
+								time.sleep(delay)
 							else:
 								print "skipping already processed fic"
 
 			else:
 				for fic_id in fic_ids:
 					write_fic_to_csv(fic_id, only_first_chap, writer, errorwriter)
-					time.sleep(1)
+					time.sleep(delay)
 
 main()
