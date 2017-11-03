@@ -1,6 +1,6 @@
 # AO3Scraper
 
-In collaboration with [@ssterman](https://github.com/ssterman). A simple Python [Archive of Our Own](https://archiveofourown.org/) scraper.
+In collaboration with [@ssterman](https://github.com/ssterman). A simple Python [Archive of Our Own](https://archiveofourown.org/) scraper. Now with HASTAC 2017 [presentation slides](http://tiny.cc/ao3-slides)!
 
 Features:
 - Given a fandom URL and amount of fic you want, returns a list of the fic IDs. (ao3_work_ids.py)
