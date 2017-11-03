@@ -106,7 +106,6 @@ def get_ids(header_info=''):
     global page_empty
     headers = {'user-agent' : header_info}
     req = requests.get(url, headers=headers)
-    print headers
     soup = BeautifulSoup(req.text, "lxml")
 
     # some responsiveness in the "UI"
@@ -258,6 +257,6 @@ def main():
     else:
         process_for_ids(header_info)
 
-    print "That's all, folks"
+    print "\nThat's all, folks"
 
 main()
