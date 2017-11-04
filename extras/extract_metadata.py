@@ -4,11 +4,19 @@ Sometimes the resulting files are huge.  To extract the metadata without the fic
 
 import csv
 import os
+import argparse
 
 def main():
 	csv.field_size_limit(1000000000)  # up the field size because stories are long
-	csv_name = raw_input("What is the csv called?  ")
-	
+
+	parser = argparse.ArgumentParser(description='Extract metadata from a fic csv')
+	parser.add_argument(
+		'csv', metavar='csv',
+		help='the name of the csv with the original data')
+
+	args = parser.parse_args()
+	csv_name = args.csv
+
 	# clean extension
 	if ".csv" not in csv_name:
 		csv_name = csv_name + ".csv"
