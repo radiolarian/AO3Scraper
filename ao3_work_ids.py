@@ -94,13 +94,18 @@ def get_args():
             for row in tags_reader:
                 tags.append(row[0])
 
+    header_info = str(args.header)
+
+    return header_info
+
 # 
 # navigate to a works listed page,
 # then extract all work ids
 # 
-def get_ids():
+def get_ids(header_info=''):
     global page_empty
-    req = requests.get(url)
+    headers = {'user-agent' : header_info}
+    req = requests.get(url, headers=headers)
     soup = BeautifulSoup(req.text, "lxml")
 
     # some responsiveness in the "UI"
@@ -229,16 +234,16 @@ def reset():
     page_empty = False
     num_recorded_fic = 0
 
-def process_for_ids():
+def process_for_ids(header_info=''):
     while(not_finished()):
         # 5 second delay between requests as per AO3's terms of service
         time.sleep(5)
-        ids = get_ids()
+        ids = get_ids(header_info)
         write_ids_to_csv(ids)
         update_url_to_next_page()
 
 def main():
-    get_args()
+    header_info = get_args()
     make_readme()
 
     print ("processing...\n")
@@ -248,9 +253,9 @@ def main():
             print ("Getting tag: ", t)
             reset()
             add_tag_to_url(t)
-            process_for_ids()
+            process_for_ids(header_info)
     else:
-        process_for_ids()
+        process_for_ids(header_info)
 
     print ("That's all, folks.")
 

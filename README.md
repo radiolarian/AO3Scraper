@@ -1,6 +1,6 @@
 # AO3Scraper
 
-In collaboration with [@ssterman](https://github.com/ssterman). A simple Python [Archive of Our Own](https://archiveofourown.org/) scraper.
+In collaboration with [@ssterman](https://github.com/ssterman). A simple Python [Archive of Our Own](https://archiveofourown.org/) scraper. Now with HASTAC 2017 [presentation slides](http://tiny.cc/ao3-slides)!
 
 Features:
 - Given a fandom URL and amount of fic you want, returns a list of the fic IDs. (ao3_work_ids.py)
@@ -51,9 +51,7 @@ Happy scraping!
 
 ## Improvements
 
-We love pull requests. Some known issues, all around data clean-up / CSV saving:
-- While basic unicode stripping works (thanks, [@kolvia!](http://github.com/kolvia)), we still cannot handle the majority of non-English characters, e.g. fics in Chinese.  These are currently skipped and the ids saved to a separate csv.
-- Viewing the csv in Excel causes some weird line break issues in fic content. (Viewing it in the Mac preview viewer is fine).
+We love pull requests!
 
 ## FF.net
 
