@@ -11,6 +11,8 @@ import requests
 import csv
 import sys
 import datetime
+import argparse
+
 
 url = ""
 input_csv_name = ""
@@ -21,17 +23,25 @@ def get_user_params():
 	global url
 	global input_csv_name
 	global output_csv_name
-	# user input the url
-	while (url == ""):
-		# e.g. https://archiveofourown.org/tags/Fluff
-		url = raw_input("The tag's url? ")
+	
 
-	while (input_csv_name == ""):
-		input_csv_name = raw_input("What csv holds the base set of metadata? ")
+	# e.g. https://archiveofourown.org/tags/Fluff
+	parser = argparse.ArgumentParser(description='Extract metadata from a fic csv')
+	parser.add_argument(
+		'url', metavar='url', 
+		help='the name of the url for the tag')
+	parser.add_argument(
+		'csv', metavar='csv', 
+		help='the name of the csv with the base set of metadata')
+	parser.add_argument(
+		'out_csv', metavar='out_csv', 
+		help='the name of the output csv')
 
+	args = parser.parse_args()
+	url = args.url
+	input_csv_name = args.csv
+	output_csv_name = args.out_csv
 
-	while (output_csv_name == ""):
-		output_csv_name = raw_input("What should we call the output csv? ")
 
 # work_id,title,author,rating,category,fandom,relationship,character,additional tags,language,published,status,status date,words,chapters,comments,kudos,bookmarks,hits
 def contains_tag(row, tags):
