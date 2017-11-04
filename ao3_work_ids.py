@@ -241,17 +241,17 @@ def main():
     get_args()
     make_readme()
 
-    print "processing...\n"
+    print ("processing...\n")
 
     if (len(tags)):
         for t in tags:
-            print "Getting tag: " + t
+            print ("Getting tag: ", t)
             reset()
             add_tag_to_url(t)
             process_for_ids()
     else:
         process_for_ids()
 
-    print "That's all, folks"
+    print ("That's all, folks.")
 
 main()

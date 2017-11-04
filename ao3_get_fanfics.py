@@ -125,7 +125,7 @@ def write_fic_to_csv(fic_id, only_first_chap, writer, errorwriter, header_info='
 		try:
 			writer.writerow(row)
 		except:
-			print("Unexpected error: ", sys.exc_info()[0])
+			print('Unexpected error: ', sys.exc_info()[0])
 			error_row = [fic_id] +  [sys.exc_info()[0]]
 			errorwriter.writerow(error_row)
 		print('Done.')
@@ -200,7 +200,7 @@ def main():
 								write_fic_to_csv(row[0], only_first_chap, writer, errorwriter, headers)
 								time.sleep(delay)
 							else:
-								print "Skipping already processed fic"
+								print('Skipping already processed fic')
 
 			else:
 				for fic_id in fic_ids:
