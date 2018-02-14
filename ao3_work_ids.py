@@ -1,7 +1,6 @@
 # Retrieve fic ids from an AO3 search
 # Will return in searched order
 # Saves ids to a csv for later use e.g. to retrieve fic text
-# this is for python 2.7 
 
 # Options:
 # Only retrieve multichapter fics

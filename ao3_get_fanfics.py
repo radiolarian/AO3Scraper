@@ -25,7 +25,7 @@
 #
 # Author: Jingyi Li soundtracknoon [at] gmail
 # I wrote this in Python 2.7. 9/23/16
-# TO DO MAKE SURE THIS IS PYTHON 3 COMPATIBLE LMAO 
+# Updated 2/13/18 (also Python3 compatible)
 #######
 
 import requests
@@ -190,11 +190,15 @@ def main():
 					reader = csv.reader(f_in)
 					if restart is '':
 						for row in reader:
+							if not row:
+								continue
 							write_fic_to_csv(row[0], only_first_chap, writer, errorwriter, headers)
 							time.sleep(delay)
 					else: 
 						found_restart = False
 						for row in reader:
+							if not row:
+								continue
 							found_restart = process_id(row[0], restart, found_restart)
 							if found_restart:
 								write_fic_to_csv(row[0], only_first_chap, writer, errorwriter, headers)
