@@ -56,3 +56,6 @@ We love pull requests!
 ## FF.net
 
 Want to scrape fanfiction.net? Check out my friend [@smilli](https://github.com/smilli/)'s [ff.net scraper](https://github.com/smilli/fanfiction)! 
+
+## License
+This work is licensed under the Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0). Feel free to use it and adapt it however you want, but don't make money off of it!
