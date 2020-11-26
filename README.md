@@ -8,6 +8,7 @@ Features:
 - Given the CSV of fic metadata and content created by ao3_get_fanfics.py, saves a new CSV of only the metadata. (extract_metadata.py)
 - Given the CSV of fic metadata and content created by ao3_get_fanfics.py, creates a folder of individual text files containing the body of each fic (csv_to_txts.py)
 - Given the CSV of fic metadata and content created by ao3_get_fanfics.py, uses an AO3 tag URL to count the number of works using that tag or its wrangled synonyms (get_tag_counts.py)
+- (new!) Scrape users who have authored, kudos-ed, bookmarked (``get_authors, get_kudos, get_bookmarks`` functions)
 
 
 ## Dependencies
