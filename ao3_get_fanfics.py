@@ -198,7 +198,7 @@ def write_fic_to_csv(fic_id, only_first_chap, writer, errorwriter, header_info='
 		content = soup.find("div", id= "chapters")
 		chapters = content.select('p')
 		chaptertext = '\n\n'.join([unidecode(chapter.text) for chapter in chapters])
-		row = [fic_id] + [title] + [author] + list(map(lambda x: ', '.join(x), tags)) + stats + [chaptertext] + [all_kudos] + [all_bookmarks]
+		row = [fic_id] + [title] + [author] + list(map(lambda x: ', '.join(x), tags)) + stats  + [all_kudos] + [all_bookmarks] + [chaptertext]
 
 		try:
 			writer.writerow(row)
@@ -260,7 +260,7 @@ def main():
 			#does the csv already exist? if not, let's write a header row.
 			if os.stat(csv_out).st_size == 0:
 				print('Writing a header row for the csv.')
-				header = ['work_id', 'title', 'author', 'rating', 'category', 'fandom', 'relationship', 'character', 'additional tags', 'language', 'published', 'status', 'status date', 'words', 'chapters', 'comments', 'kudos', 'bookmarks', 'hits', 'body', 'all_kudos', 'all_bookmarks']
+				header = ['work_id', 'title', 'author', 'rating', 'category', 'fandom', 'relationship', 'character', 'additional tags', 'language', 'published', 'status', 'status date', 'words', 'chapters', 'comments', 'kudos', 'bookmarks', 'hits', 'all_kudos', 'all_bookmarks', 'body']
 				writer.writerow(header)
 			if is_csv:
 				csv_fname = fic_ids[0]
