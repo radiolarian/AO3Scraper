@@ -85,19 +85,22 @@ def get_tags(meta):
 	return list(map(lambda tag: get_tag_info(tag, meta), tags))
 
 # get kudos
-def get_kudos(meta):	
-	users = []
+def get_kudos(meta):
+	if (meta):
+		
+		users = []
 
-	## hunt for kudos' contents
-	kudos = meta.contents
+		## hunt for kudos' contents
+		kudos = meta.contents
 
-	# extract user names
-	for kudo in kudos:
-		if kudo.name == 'a':
-			if 'more users' not in kudo.contents[0] and '(collapse)' not in kudo.contents[0]:
-				users.append(kudo.contents[0])
-	
-	return users
+		# extract user names
+		for kudo in kudos:
+			if kudo.name == 'a':
+				if 'more users' not in kudo.contents[0] and '(collapse)' not in kudo.contents[0]:
+					users.append(kudo.contents[0])
+		
+		return users
+	return []
 
 # get author(s)
 def get_authors(meta):
