@@ -28,9 +28,10 @@ def main():
 			rd = csv.reader(csvfile, dialect=csv.excel_tab, delimiter=',', quotechar='"')
 			wr = csv.writer(metacsv, delimiter=',', quotechar='"')
 			for row in rd:
-				work_id = row[0]
-				if work_id not in ids_seen:
-					wr.writerow(row[:-1])
-					ids_seen.append(work_id)
+				if (row != []):
+					work_id = row[0]
+					if work_id not in ids_seen:
+						wr.writerow(row[:-1])
+						ids_seen.append(work_id)
 
 main()
