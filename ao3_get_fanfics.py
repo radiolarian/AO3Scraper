@@ -166,7 +166,7 @@ def access_denied(soup):
 		return True
 	return False
 
-def write_fic_to_csv(fic_id, only_first_chap, writer, errorwriter, header_info=''):
+def write_fic_to_csv(fic_id, only_first_chap, lang, writer, errorwriter, header_info=''):
 	'''
 	fic_id is the AO3 ID of a fic, found every URL /works/[id].
 	writer is a csv writer object
@@ -195,24 +195,46 @@ def write_fic_to_csv(fic_id, only_first_chap, writer, errorwriter, header_info='
 		visible_kudos = get_kudos(soup.find('p', class_='kudos'))
 		hidden_kudos = get_kudos(soup.find('span', class_='kudos_expanded hidden'))
 		all_kudos = visible_kudos + hidden_kudos
-		
-		#get bookmarks
-		bookmark_url = 'http://archiveofourown.org/works/'+str(fic_id)+'/bookmarks'
-		all_bookmarks = get_bookmarks(bookmark_url, header_info)
+		sep = ','
+		stripped = text.split(sep, 1)[0]
+		if lang != False:
+			if lang != stripped:
+				print('Fic is not ' + lang + ', skipping...')
+			else:
+				#get bookmarks
+				bookmark_url = 'http://archiveofourown.org/works/'+str(fic_id)+'/bookmarks'
+				all_bookmarks = get_bookmarks(bookmark_url, header_info)
 
-		#get the fic itself
-		content = soup.find("div", id= "chapters")
-		chapters = content.select('p')
-		chaptertext = '\n'.join([unidecode(chapter.text) for chapter in chapters])
-		row = [fic_id] + [title] + [author] + list(map(lambda x: ', '.join(x), tags)) + stats  + [all_kudos] + [all_bookmarks] + [chaptertext]
+				#get the fic itself
+				content = soup.find("div", id= "chapters")
+				chapters = content.select('p')
+				chaptertext = '\n'.join([unidecode(chapter.text) for chapter in chapters])
+				row = [fic_id] + [title] + [author] + list(map(lambda x: ', '.join(x), tags)) + stats + [all_kudos] + [all_bookmarks] + [chaptertext]
 
-		try:
-			writer.writerow(row)
-		except:
-			print('Unexpected error: ', sys.exc_info()[0])
-			error_row = [fic_id] +  [sys.exc_info()[0]]
-			errorwriter.writerow(error_row)
-		print('Done.')
+				try:
+					writer.writerow(row)
+				except:
+					print('Unexpected error: ', sys.exc_info()[0])
+					error_row = [fic_id] +  [sys.exc_info()[0]]
+					errorwriter.writerow(error_row)
+				print('Done.')
+		else:
+			#get bookmarks
+			bookmark_url = 'http://archiveofourown.org/works/'+str(fic_id)+'/bookmarks'
+			all_bookmarks = get_bookmarks(bookmark_url, header_info)
+
+			#get the fic itself
+			content = soup.find("div", id= "chapters")
+			chapters = content.select('p')
+			chaptertext = '\n'.join([unidecode(chapter.text) for chapter in chapters])
+			row = [fic_id] + [title] + [author] + list(map(lambda x: ', '.join(x), tags)) + stats + [all_kudos] + [all_bookmarks] + [chaptertext]
+			try:
+				writer.writerow(row)
+			except:
+				print('Unexpected error: ', sys.exc_info()[0])
+				error_row = [fic_id] +  [sys.exc_info()[0]]
+				errorwriter.writerow(error_row)
+			print('Done.')
 
 def get_args(): 
 	parser = argparse.ArgumentParser(description='Scrape and save some fanfic, given their AO3 IDs.')
@@ -233,7 +255,7 @@ def get_args():
 		help='only retrieve first chapter of multichapter fics')
 	parser.add_argument(
 		'--lang', default='', 
-		help='only retrieves fics of certain language (e.g English)')
+		help='only retrieves fics of certain language (e.g English), make sure you use correct spelling and capitalization or this argument will not work')
 	args = parser.parse_args()
 	fic_ids = args.ids
 	is_csv = (len(fic_ids) == 1 and '.csv' in fic_ids[0]) 
@@ -282,7 +304,7 @@ def main():
 						for row in reader:
 							if not row:
 								continue
-							write_fic_to_csv(row[0], only_first_chap, writer, errorwriter, headers)
+							write_fic_to_csv(row[0], only_first_chap, lang, writer, errorwriter, headers)
 							time.sleep(delay)
 					else: 
 						found_restart = False
