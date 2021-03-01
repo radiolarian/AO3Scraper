@@ -26,6 +26,12 @@
 # Author: Jingyi Li soundtracknoon [at] gmail
 # I wrote this in Python 2.7. 9/23/16
 # Updated 2/13/18 (also Python3 compatible)
+#
+#
+# Update 2/3/21
+# jack-debug
+# I added a new argument that only gets fanfics of a certain language
+# --lang
 #######
 
 import requests
@@ -225,6 +231,9 @@ def get_args():
 	parser.add_argument(
 		'--firstchap', default='', 
 		help='only retrieve first chapter of multichapter fics')
+	parser.add_argument(
+		'--lang', default='', 
+		help='only retrieves fics of certain language (e.g English)')
 	args = parser.parse_args()
 	fic_ids = args.ids
 	is_csv = (len(fic_ids) == 1 and '.csv' in fic_ids[0]) 
@@ -232,11 +241,14 @@ def get_args():
 	headers = str(args.header)
 	restart = str(args.restart)
 	ofc = str(args.firstchap)
+	lang = str(args.lang)
 	if ofc != "":
 		ofc = True
 	else:
 		ofc = False
-	return fic_ids, csv_out, headers, restart, is_csv, ofc
+	if lang == "":
+		lang = False
+	return fic_ids, csv_out, headers, restart, is_csv, ofc, lang
 
 '''
 
@@ -250,8 +262,8 @@ def process_id(fic_id, restart, found):
 		return False
 
 def main():
-	fic_ids, csv_out, headers, restart, is_csv, only_first_chap = get_args()
-	delay = 5
+	fic_ids, csv_out, headers, restart, is_csv, only_first_chap, lang = get_args()
+	delay = 6
 	os.chdir(os.getcwd())
 	with open(csv_out, 'a') as f_out:
 		writer = csv.writer(f_out)
