@@ -26,6 +26,12 @@
 # Author: Jingyi Li soundtracknoon [at] gmail
 # I wrote this in Python 2.7. 9/23/16
 # Updated 2/13/18 (also Python3 compatible)
+#
+#
+# Update 2/3/21
+# jack-debug
+# I added a new argument that only gets fanfics of a certain language
+# --lang
 #######
 
 import requests
@@ -160,7 +166,7 @@ def access_denied(soup):
 		return True
 	return False
 
-def write_fic_to_csv(fic_id, only_first_chap, writer, errorwriter, header_info=''):
+def write_fic_to_csv(fic_id, only_first_chap, lang, writer, errorwriter, header_info=''):
 	'''
 	fic_id is the AO3 ID of a fic, found every URL /works/[id].
 	writer is a csv writer object
@@ -189,24 +195,25 @@ def write_fic_to_csv(fic_id, only_first_chap, writer, errorwriter, header_info='
 		visible_kudos = get_kudos(soup.find('p', class_='kudos'))
 		hidden_kudos = get_kudos(soup.find('span', class_='kudos_expanded hidden'))
 		all_kudos = visible_kudos + hidden_kudos
-		
-		#get bookmarks
-		bookmark_url = 'http://archiveofourown.org/works/'+str(fic_id)+'/bookmarks'
-		all_bookmarks = get_bookmarks(bookmark_url, header_info)
+		if lang != False and lang != stats[0]:
+			print('Fic is not in ' + lang + ', skipping...')
+		else:
+			#get bookmarks
+			bookmark_url = 'http://archiveofourown.org/works/'+str(fic_id)+'/bookmarks'
+			all_bookmarks = get_bookmarks(bookmark_url, header_info)
 
-		#get the fic itself
-		content = soup.find("div", id= "chapters")
-		chapters = content.select('p')
-		chaptertext = '\n\n'.join([unidecode(chapter.text) for chapter in chapters])
-		row = [fic_id] + [title] + [author] + list(map(lambda x: ', '.join(x), tags)) + stats  + [all_kudos] + [all_bookmarks] + [chaptertext]
-
-		try:
-			writer.writerow(row)
-		except:
-			print('Unexpected error: ', sys.exc_info()[0])
-			error_row = [fic_id] +  [sys.exc_info()[0]]
-			errorwriter.writerow(error_row)
-		print('Done.')
+			#get the fic itself
+			content = soup.find("div", id= "chapters")
+			chapters = content.select('p')
+			chaptertext = '\n'.join([unidecode(chapter.text) for chapter in chapters])
+			row = [fic_id] + [title] + [author] + list(map(lambda x: ', '.join(x), tags)) + stats + [all_kudos] + [all_bookmarks] + [chaptertext]
+			try:
+				writer.writerow(row)
+			except:
+				print('Unexpected error: ', sys.exc_info()[0])
+				error_row = [fic_id] +  [sys.exc_info()[0]]
+				errorwriter.writerow(error_row)
+			print('Done.')
 
 def get_args(): 
 	parser = argparse.ArgumentParser(description='Scrape and save some fanfic, given their AO3 IDs.')
@@ -225,6 +232,9 @@ def get_args():
 	parser.add_argument(
 		'--firstchap', default='', 
 		help='only retrieve first chapter of multichapter fics')
+	parser.add_argument(
+		'--lang', default='', 
+		help='only retrieves fics of certain language (e.g English), make sure you use correct spelling and capitalization or this argument will not work')
 	args = parser.parse_args()
 	fic_ids = args.ids
 	is_csv = (len(fic_ids) == 1 and '.csv' in fic_ids[0]) 
@@ -232,11 +242,14 @@ def get_args():
 	headers = str(args.header)
 	restart = str(args.restart)
 	ofc = str(args.firstchap)
+	lang = str(args.lang)
 	if ofc != "":
 		ofc = True
 	else:
 		ofc = False
-	return fic_ids, csv_out, headers, restart, is_csv, ofc
+	if lang == "":
+		lang = False
+	return fic_ids, csv_out, headers, restart, is_csv, ofc, lang
 
 '''
 
@@ -250,7 +263,7 @@ def process_id(fic_id, restart, found):
 		return False
 
 def main():
-	fic_ids, csv_out, headers, restart, is_csv, only_first_chap = get_args()
+	fic_ids, csv_out, headers, restart, is_csv, only_first_chap, lang = get_args()
 	delay = 5
 	os.chdir(os.getcwd())
 	with open(csv_out, 'a') as f_out:
@@ -270,7 +283,7 @@ def main():
 						for row in reader:
 							if not row:
 								continue
-							write_fic_to_csv(row[0], only_first_chap, writer, errorwriter, headers)
+							write_fic_to_csv(row[0], only_first_chap, lang, writer, errorwriter, headers)
 							time.sleep(delay)
 					else: 
 						found_restart = False
