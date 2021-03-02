@@ -199,7 +199,7 @@ def write_fic_to_csv(fic_id, only_first_chap, lang, writer, errorwriter, header_
 		stats2 = stats2.join(stats)
 		sep = ' '
 		stripped = stats2.split(sep, 1)[0]
-		print(stats2)
+		print(stripped)
 		if lang != False:
 			if lang != stripped:
 				print('Fic is not ' + lang + ', skipping...')
