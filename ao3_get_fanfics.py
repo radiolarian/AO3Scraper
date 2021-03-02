@@ -197,6 +197,7 @@ def write_fic_to_csv(fic_id, only_first_chap, lang, writer, errorwriter, header_
 		all_kudos = visible_kudos + hidden_kudos
 		stats2 = ' '
 		stats2 = stats2.join(stats)
+		stats2 = stats2.partition(' ')
 		print(stats2)
 		if lang != False:
 			if lang != stripped:
