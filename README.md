@@ -27,7 +27,7 @@ Run `python ao3_work_ids.py <url>`. You can optionally add some flags:
 - `--num_to_retrieve 10` (how many work ids you want, defaults to all)
 - `--multichapter_only 1` (restricts output to only works with more than one chapter, defaults to false)
 - `--tag_csv name_of_csv.csv` (provide an optional list of tags; the retrieved fics must have one or more such tags. default ignores this functionality)
-- `--lang English` (scrapes fics of only a specific language, this argument will not work if you use incorrect spelling and capitalization) Note: if the desired language is not English, then you will have to input the name of that language as it appears on AO3, for example if you want your fics to be in French the argument after `--lang` should be 'Francais' not 'French'.
+- `--lang English` (scrapes fics of only a specific language, this argument will not work if you use incorrect spelling and capitalization) Note: if the desired language is not English, then you will have to input the name of that language as it appears on AO3, for example if you want your fics to be in French the argument after `--lang` should be 'Francais' not 'French', including any accents in the input language will also not work.
 
 The only required input is the search URL.  
 
