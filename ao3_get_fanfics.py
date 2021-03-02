@@ -195,8 +195,10 @@ def write_fic_to_csv(fic_id, only_first_chap, lang, writer, errorwriter, header_
 		visible_kudos = get_kudos(soup.find('p', class_='kudos'))
 		hidden_kudos = get_kudos(soup.find('span', class_='kudos_expanded hidden'))
 		all_kudos = visible_kudos + hidden_kudos
-		sep = ','
-		stripped = stats.split(sep, 1)[0]
+		stats2 = ' '
+		stats2 = stats2.join(stats)
+		stripped = stats2.partition(' ')
+		stripped = stripped.replace(' ','')
 		if lang != False:
 			if lang != stripped:
 				print('Fic is not ' + lang + ', skipping...')
