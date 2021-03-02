@@ -287,7 +287,7 @@ def process_id(fic_id, restart, found):
 
 def main():
 	fic_ids, csv_out, headers, restart, is_csv, only_first_chap, lang = get_args()
-	delay = 6
+	delay = 5
 	os.chdir(os.getcwd())
 	with open(csv_out, 'a') as f_out:
 		writer = csv.writer(f_out)
