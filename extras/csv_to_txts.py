@@ -33,8 +33,9 @@ def main():
 		rd = csv.reader(csvfile, delimiter=',', quotechar='"')
 		next(rd)  # skip the header row
 		for row in rd:
-			work_id = row[0]
-			with open(folder_name + "/" + row[0] + ".txt", "w") as text_file:
-				text_file.write(row[-1])
+			if (len(row)):
+				work_id = row[0]
+				with open(folder_name + "/" + row[0] + ".txt", "w") as text_file:
+					text_file.write(row[-1])
 
 main()
