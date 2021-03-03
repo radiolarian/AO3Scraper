@@ -26,7 +26,7 @@ def main():
 	if ".csv" not in csv_name:
 		csv_name = csv_name + ".csv"
 
-	with open(csv_name, 'rb') as csvfile:
+	with open(csv_name, 'rt') as csvfile:
 		folder_name = csv_name + "_text_files"
 		if not os.path.exists(folder_name):
 			os.makedirs(folder_name)
