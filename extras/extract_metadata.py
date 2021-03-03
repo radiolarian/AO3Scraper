@@ -23,7 +23,7 @@ def main():
 
 	ids_seen = []
 
-	with open(csv_name, 'rU') as csvfile:
+	with open(csv_name, 'rt') as csvfile:
 		with open(csv_name[:-4] + "_metadata.csv", 'a') as metacsv:
 			rd = csv.reader(csvfile, dialect=csv.excel_tab, delimiter=',', quotechar='"')
 			wr = csv.writer(metacsv, delimiter=',', quotechar='"')
@@ -31,7 +31,7 @@ def main():
 				if (row != []):
 					work_id = row[0]
 					if work_id not in ids_seen:
-						wr.writerow(row[:-1])
+						wr.writerow(row[:-3])
 						ids_seen.append(work_id)
 
 main()
