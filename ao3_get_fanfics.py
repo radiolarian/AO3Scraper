@@ -195,31 +195,8 @@ def write_fic_to_csv(fic_id, only_first_chap, lang, writer, errorwriter, header_
 		visible_kudos = get_kudos(soup.find('p', class_='kudos'))
 		hidden_kudos = get_kudos(soup.find('span', class_='kudos_expanded hidden'))
 		all_kudos = visible_kudos + hidden_kudos
-		stats2 = ' '
-		stats2 = stats2.join(stats)
-		sep = ' '
-		stripped = stats2.split(sep, 1)[0]
-		if lang != False:
-			if lang != stripped:
-				print('Fic is not ' + lang + ', skipping...')
-			else:
-				#get bookmarks
-				bookmark_url = 'http://archiveofourown.org/works/'+str(fic_id)+'/bookmarks'
-				all_bookmarks = get_bookmarks(bookmark_url, header_info)
-
-				#get the fic itself
-				content = soup.find("div", id= "chapters")
-				chapters = content.select('p')
-				chaptertext = '\n'.join([unidecode(chapter.text) for chapter in chapters])
-				row = [fic_id] + [title] + [author] + list(map(lambda x: ', '.join(x), tags)) + stats + [all_kudos] + [all_bookmarks] + [chaptertext]
-
-				try:
-					writer.writerow(row)
-				except:
-					print('Unexpected error: ', sys.exc_info()[0])
-					error_row = [fic_id] +  [sys.exc_info()[0]]
-					errorwriter.writerow(error_row)
-				print('Done.')
+		if lang != False and lang != stats[0]:
+			print('Fic is not in ' + lang + ', skipping...')
 		else:
 			#get bookmarks
 			bookmark_url = 'http://archiveofourown.org/works/'+str(fic_id)+'/bookmarks'
