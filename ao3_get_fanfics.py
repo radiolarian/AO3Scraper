@@ -205,7 +205,7 @@ def write_fic_to_csv(fic_id, only_first_chap, lang, writer, errorwriter, header_
 			#get the fic itself
 			content = soup.find("div", id= "chapters")
 			chapters = content.select('p')
-			chaptertext = '\n'.join([unidecode(chapter.text) for chapter in chapters])
+			chaptertext = '\n\n'.join([unidecode(chapter.text) for chapter in chapters])
 			row = [fic_id] + [title] + [author] + list(map(lambda x: ', '.join(x), tags)) + stats + [all_kudos] + [all_bookmarks] + [chaptertext]
 			try:
 				writer.writerow(row)
