@@ -292,14 +292,14 @@ def main():
 								continue
 							found_restart = process_id(row[0], restart, found_restart)
 							if found_restart:
-								write_fic_to_csv(row[0], only_first_chap, writer, errorwriter, headers)
+								write_fic_to_csv(row[0], only_first_chap, lang, writer, errorwriter, headers)
 								time.sleep(delay)
 							else:
 								print('Skipping already processed fic')
 
 			else:
 				for fic_id in fic_ids:
-					write_fic_to_csv(fic_id, only_first_chap, writer, errorwriter, headers)
+					write_fic_to_csv(fic_id, only_first_chap, lang, writer, errorwriter, headers)
 					time.sleep(delay)
 
 main()
