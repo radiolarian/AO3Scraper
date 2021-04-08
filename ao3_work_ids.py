@@ -110,7 +110,7 @@ def get_ids(header_info=''):
     # some responsiveness in the "UI"
     sys.stdout.write('.')
     sys.stdout.flush()
-    works = soup.find_all(class_="work blurb group")
+    works = soup.select("li.work.blurb.group")
 
     # see if we've gone too far and run out of fic: 
     if (len(works) is 0):
