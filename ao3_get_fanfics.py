@@ -266,9 +266,9 @@ def main():
 	fic_ids, csv_out, headers, restart, is_csv, only_first_chap, lang = get_args()
 	delay = 5
 	os.chdir(os.getcwd())
-	with open(csv_out, 'a') as f_out:
+	with open(csv_out, 'a', newline="") as f_out:
 		writer = csv.writer(f_out)
-		with open("errors_" + csv_out, 'a') as e_out:
+		with open("errors_" + csv_out, 'a', newline="") as e_out:
 			errorwriter = csv.writer(e_out)
 			#does the csv already exist? if not, let's write a header row.
 			if os.stat(csv_out).st_size == 0:
@@ -277,7 +277,7 @@ def main():
 				writer.writerow(header)
 			if is_csv:
 				csv_fname = fic_ids[0]
-				with open(csv_fname, 'r+') as f_in:
+				with open(csv_fname, 'r+', newline="") as f_in:
 					reader = csv.reader(f_in)
 					if restart is '':
 						for row in reader:
