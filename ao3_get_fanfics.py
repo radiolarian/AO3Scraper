@@ -26,13 +26,8 @@
 # Author: Jingyi Li soundtracknoon [at] gmail
 # I wrote this in Python 2.7. 9/23/16
 # Updated 2/13/18 (also Python3 compatible)
-#
-#
-# Update 2/3/21
-# jack-debug
-# I added a new argument that only gets fanfics of a certain language
-# --lang
 #######
+
 
 import requests
 from bs4 import BeautifulSoup
@@ -91,21 +86,34 @@ def get_tags(meta):
 	return list(map(lambda tag: get_tag_info(tag, meta), tags))
 
 # get kudos
-def get_kudos(meta):
-	if (meta):
-		
-		users = []
+def get_all_kudos(url, header_info):
+	headers = {'user-agent' : header_info}
+	all_kudos = []
 
-		## hunt for kudos' contents
-		kudos = meta.contents
+	req = requests.get(url, headers=headers)
+	src = req.text
+	soup = BeautifulSoup(src, 'html.parser')
 
-		# extract user names
-		for kudo in kudos:
-			if kudo.name == 'a':
-				if 'more users' not in kudo.contents[0] and '(collapse)' not in kudo.contents[0]:
-					users.append(kudo.contents[0])
-		
-		return users
+	# find all pages
+	if (soup.find('ol', class_='pagination actions')):
+		pages = soup.find('ol', class_='pagination actions').findChildren("li" , recursive=False)
+		max_pages = int(pages[-2].contents[0].contents[0])
+		count = 1
+
+		while count <= max_pages:
+			# extract each bookmark per user
+			tags = soup.find("p", class_="kudos")
+			all_kudos += get_users(tags, 'kudo')
+
+			# next page
+			count+=1
+			req = requests.get(url+'?page='+str(count), headers=headers)
+			src = req.text
+			soup = BeautifulSoup(src, 'html.parser')
+	else:
+		tags = soup.find("p", class_="kudos")
+		all_kudos += get_users(tags, 'kudo')
+
 	return []
 
 # get author(s)
@@ -136,8 +144,8 @@ def get_bookmarks(url, header_info):
 
 		while count <= max_pages:
 			# extract each bookmark per user
-			tags = soup.findAll('h5', class_='byline heading')
-			bookmarks += get_users(tags)
+			tags = soup.findAll('li', class_='user short blurb group')
+			bookmarks += get_users(tags, 'bookmark')
 
 			# next page
 			count+=1
@@ -146,18 +154,192 @@ def get_bookmarks(url, header_info):
 			soup = BeautifulSoup(src, 'html.parser')
 	else:
 		tags = soup.findAll('h5', class_='byline heading')
-		bookmarks += get_users(tags)
+		bookmarks += get_users(tags, 'bookmark')
 
 	return bookmarks
 
-# get users form bookmarks	
-def get_users (meta):
+# get users from bookmarks/kudos
+def get_users (meta, kind):
 	users = []
-	for tag in meta:
-			user = tag.findChildren("a" , recursive=False)[0].contents[0]
-			users.append(user)
+
+	if meta != None:
+		for tag in meta:
+				if type(tag).__name__ == 'Tag':
+					if kind == 'kudo':
+						user = tag.contents[0]
+					elif kind == 'bookmark':
+						username = tag.find('h5', class_='byline heading').findChildren('a')[0].contents[0]
+						datetime = tag.findChildren('p', class_='datetime')[0].contents[0]
+
+						bookmarkTags = tag.findAll('a', class_='tag')
+						bookmarkTags = [item.contents[0] for item in bookmarkTags]
+
+						collections = tag.find('ul', class_='meta commas')
+						if collections != None:
+							collections = [item.contents[0] for item in collections.findAll('a')]
+						
+						summary = tag.find('blockquote', class_='userstuff summary')
+						if summary != None: 
+							summary = summary.findAll('p')
+							summary = [item.contents[0] for item in summary]
+
+						user = { 'username': username, 'date': datetime, 'tags': bookmarkTags, \
+							'collections': collections, 'summary': summary}
+
+					users.append(user)
 
 	return users
+
+def get_single_comment(comment, parent):
+	# Find username
+	if comment.find('h4', class_='heading byline').find('a'):
+		username = comment.find('h4', class_='heading byline').find('a').contents[0]
+	else:
+		username = comment.find('h4', class_='heading byline').contents[0]
+
+	# Get datetime
+	datetime = comment.find('h4', class_='heading byline').find('span', class_="posted datetime").contents
+	remove = ['\n', ' ']
+	dateObj = {}
+
+	for item in datetime:
+		if item not in remove:
+			itemClass = item['class'][0]
+			itemValue = item.contents[0]
+			dateObj[itemClass] = itemValue
+
+	# Get comment id
+	commentid = comment['id'].split('_')[1]
+
+	# Get direct comment text
+	text = comment.find('blockquote', class_ ='userstuff').find('p').contents[0]
+
+	# Create object and return
+	commentData = {'user': username, 'datetime': dateObj, 'id': commentid, 'parent': parent, 'text': text}
+	return commentData
+
+def get_comment_thread(comment_thread, parent):
+	#print(comment_thread[0])
+	# Recurse till you find the deepest level
+	if comment_thread[0].findChild('ol', class_ ='thread'):
+		print( comment_thread[0].findChild('ol', class_ ='thread'))
+		nest_level = comment_thread[0].findChild('ol', class_ ='thread')[0]
+		print('nest_level', nest_level)
+		print()
+		get_comment_thread(comment_thread, False)
+	else:
+		comments = comment_thread[0].find_all('li')
+		all_comments = []
+		print('!!1', comments)
+		for c, comment in enumerate(comments):
+				print(comment)
+				try:
+					if comment.attrs['class']:
+						if 'odd' in comment.attrs['class'] or 'even' in comment.attrs['class']:
+							single_comment = get_single_comment(comment, True)
+							all_comments.append(single_comment)
+							
+				except:
+					print('___', comment)
+					print()
+
+		print('+++', all_comments)
+
+
+def get_comments(url, header_info):
+	all_comments = []
+	headers = {'user-agent' : header_info}
+
+	req = requests.get(url, headers=headers)
+	src = req.text
+	soup = BeautifulSoup(src, 'html.parser')
+
+	# find all pages
+	if (soup.find('ol', class_='pagination actions')):
+		pages = soup.find('ol', class_='pagination actions').findChildren("li" , recursive=False)
+		max_pages = int(pages[-2].contents[0].contents[0])
+		count = 1
+
+		while count <= max_pages:
+			comments = soup.find('ol', class_ = 'thread').findChildren("li" , recursive=False)
+			print(len(comments))
+			# comments processing
+			for c, comment in enumerate(comments):
+				try:
+					if comment.attrs['class']:
+						if 'odd' in comment.attrs['class'] or 'even' in comment.attrs['class']:
+							single_comment = get_single_comment(comment, True)
+							all_comments.append(single_comment)
+							print(len(all_comments))
+							print()
+
+				# likely a comment thread
+				except:
+					if comment.findChild('ol', class_="thread"):
+						get_comment_thread(comment.findChildren('ol'), True)
+						#print('!!!', comment.findChildren('ol'))
+
+			# next page
+			count+=1
+			req = requests.get(url+'?page='+str(count), headers=headers)
+			src = req.text
+			soup = BeautifulSoup(src, 'html.parser')
+
+# 		var thread = [
+#   {
+#     listid: 1,
+#     commentid: 1,
+#     metadata: "user? other stuff?",
+#     isauthor: false,
+#     comment: "Did you xyz? So good!",
+#     reply:
+#     {
+#       commentid: 2,
+#       metadata: "what metadata you need idk",
+#       isauthor: true,
+#       comment: "Yes! I abc!",
+#       reply:
+#       {
+#         commentid: 3,
+#         metadata: "asdf",
+#         isauthor: false,
+#         comment: "OMG so cool!",
+#         image: "idk how to do this personally",
+#         reply:
+#         {
+#           commentid: 4,
+#           metadata: "bla",
+#           isauthor: true,
+#           comment: "haha thank you!"
+#         }
+#       }
+#     }
+#   },
+#   {
+#     listid: 123,
+#     commentid: 123,
+#     metadata: "user? other stuff?",
+#     isauthor: false,
+#     comment: "I love this!",
+#     reply:
+#     {
+#       commentid: 456,
+#       metadata: "what metadata you need idk",
+#       isauthor: true,
+#       comment: "thank you so much!"
+#     }
+#   },
+#   {
+#     id: 789,
+#     metadata: "stuff",
+#     isauthor: false,
+#     comment: ";aifja;wlefj;awiefjowj"
+#   }
+# ];
+
+		return all_comments
+
+
 	
 def access_denied(soup):
 	if (soup.find(class_="flash error")):
@@ -166,7 +348,7 @@ def access_denied(soup):
 		return True
 	return False
 
-def write_fic_to_csv(fic_id, only_first_chap, lang, writer, errorwriter, header_info=''):
+def write_fic_to_csv(fic_id, only_first_chap, writer, errorwriter, header_info=''):
 	'''
 	fic_id is the AO3 ID of a fic, found every URL /works/[id].
 	writer is a csv writer object
@@ -182,6 +364,8 @@ def write_fic_to_csv(fic_id, only_first_chap, lang, writer, errorwriter, header_
 	req = requests.get(url, headers=headers)
 	src = req.text
 	soup = BeautifulSoup(src, 'html.parser')
+
+	print (url)
 	if (access_denied(soup)):
 		print('Access Denied')
 		error_row = [fic_id] + ['Access Denied']
@@ -192,28 +376,32 @@ def write_fic_to_csv(fic_id, only_first_chap, lang, writer, errorwriter, header_
 		tags = get_tags(meta)
 		stats = get_stats(meta)
 		title = unidecode(soup.find("h2", class_="title heading").string).strip()
-		visible_kudos = get_kudos(soup.find('p', class_='kudos'))
-		hidden_kudos = get_kudos(soup.find('span', class_='kudos_expanded hidden'))
-		all_kudos = visible_kudos + hidden_kudos
-		if lang != False and lang != stats[0]:
-			print('Fic is not in ' + lang + ', skipping...')
-		else:
-			#get bookmarks
-			bookmark_url = 'http://archiveofourown.org/works/'+str(fic_id)+'/bookmarks'
-			all_bookmarks = get_bookmarks(bookmark_url, header_info)
 
-			#get the fic itself
-			content = soup.find("div", id= "chapters")
-			chapters = content.select('p')
-			chaptertext = '\n\n'.join([unidecode(chapter.text) for chapter in chapters])
-			row = [fic_id] + [title] + [author] + list(map(lambda x: ', '.join(x), tags)) + stats + [all_kudos] + [all_bookmarks] + [chaptertext]
-			try:
-				writer.writerow(row)
-			except:
-				print('Unexpected error: ', sys.exc_info()[0])
-				error_row = [fic_id] +  [sys.exc_info()[0]]
-				errorwriter.writerow(error_row)
-			print('Done.')
+		# get kudos
+		# kudos_url = 'http://archiveofourown.org' + soup.find(id='kudos_more_link')['href']
+		# all_kudos = get_all_kudos(kudos_url, header_info)
+		
+		#get bookmarks
+		# bookmark_url = 'http://archiveofourown.org/works/'+str(fic_id)+'/bookmarks'
+		# all_bookmarks = get_bookmarks(bookmark_url, header_info)
+
+		# get comments
+		comments_url  = 'http://archiveofourown.org/works/' + str(fic_id) + '?show_comments=true#comments'
+		all_comments = get_comments(comments_url, header_info)
+
+		#get the fic itself
+		content = soup.find("div", id= "chapters")
+		chapters = content.select('p')
+		chaptertext = '\n\n'.join([unidecode(chapter.text) for chapter in chapters])
+		row = [fic_id] + [title] + [author] + list(map(lambda x: ', '.join(x), tags)) + stats# + [chaptertext] + [all_kudos] + [all_bookmarks]
+
+		try:
+			writer.writerow(row)
+		except:
+			print('Unexpected error: ', sys.exc_info()[0])
+			error_row = [fic_id] +  [sys.exc_info()[0]]
+			errorwriter.writerow(error_row)
+		print('Done.')
 
 def get_args(): 
 	parser = argparse.ArgumentParser(description='Scrape and save some fanfic, given their AO3 IDs.')
@@ -232,9 +420,6 @@ def get_args():
 	parser.add_argument(
 		'--firstchap', default='', 
 		help='only retrieve first chapter of multichapter fics')
-	parser.add_argument(
-		'--lang', default='', 
-		help='only retrieves fics of certain language (e.g English), make sure you use correct spelling and capitalization or this argument will not work')
 	args = parser.parse_args()
 	fic_ids = args.ids
 	is_csv = (len(fic_ids) == 1 and '.csv' in fic_ids[0]) 
@@ -242,17 +427,13 @@ def get_args():
 	headers = str(args.header)
 	restart = str(args.restart)
 	ofc = str(args.firstchap)
-	lang = str(args.lang)
 	if ofc != "":
 		ofc = True
 	else:
 		ofc = False
-	if lang == "":
-		lang = False
-	return fic_ids, csv_out, headers, restart, is_csv, ofc, lang
+	return fic_ids, csv_out, headers, restart, is_csv, ofc
 
 '''
-
 '''
 def process_id(fic_id, restart, found):
 	if found:
@@ -263,7 +444,7 @@ def process_id(fic_id, restart, found):
 		return False
 
 def main():
-	fic_ids, csv_out, headers, restart, is_csv, only_first_chap, lang = get_args()
+	fic_ids, csv_out, headers, restart, is_csv, only_first_chap = get_args()
 	delay = 5
 	os.chdir(os.getcwd())
 	with open(csv_out, 'a') as f_out:
@@ -273,17 +454,17 @@ def main():
 			#does the csv already exist? if not, let's write a header row.
 			if os.stat(csv_out).st_size == 0:
 				print('Writing a header row for the csv.')
-				header = ['work_id', 'title', 'author', 'rating', 'category', 'fandom', 'relationship', 'character', 'additional tags', 'language', 'published', 'status', 'status date', 'words', 'chapters', 'comments', 'kudos', 'bookmarks', 'hits', 'all_kudos', 'all_bookmarks', 'body']
+				header = ['work_id', 'title', 'author', 'rating', 'category', 'fandom', 'relationship', 'character', 'additional tags', 'language', 'published', 'status', 'status date', 'words', 'chapters', 'comments', 'kudos', 'bookmarks', 'hits', 'body', 'all_kudos', 'all_bookmarks']
 				writer.writerow(header)
 			if is_csv:
 				csv_fname = fic_ids[0]
 				with open(csv_fname, 'r+') as f_in:
 					reader = csv.reader(f_in)
-					if restart is '':
+					if restart == '':
 						for row in reader:
 							if not row:
 								continue
-							write_fic_to_csv(row[0], only_first_chap, lang, writer, errorwriter, headers)
+							write_fic_to_csv(row[0], only_first_chap, writer, errorwriter, headers)
 							time.sleep(delay)
 					else: 
 						found_restart = False
