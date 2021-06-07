@@ -249,7 +249,6 @@ def get_comment_thread(comment_thread, parent):
 					if comment.attrs['class']:
 						if 'odd' in comment.attrs['class'] or 'even' in comment.attrs['class']:
 							single_comment = get_single_comment(comment, False)
-							print(single_comment)
 							all_comments.append(single_comment)
 							
 				except:
@@ -288,8 +287,7 @@ def get_comments(url, header_info):
 				# likely a comment thread
 				except:
 					if comment.findChild('ol', class_="thread"):
-						all_comments.append(get_comment_thread(comment.findChildren('ol'), True))
-						#print('!!!', comment.findChildren('ol'))
+						all_comments.append(get_comment_thread(comment.findChildren('ol'), True, all_comments))
 
 			# next page
 			count+=1
@@ -315,8 +313,6 @@ def get_comments(url, header_info):
 					else:
 						all_comments.append(get_comment_thread(comment.findChildren('ol'), True))
 		return all_comments
-
-
 	
 def access_denied(soup):
 	if (soup.find(class_="flash error")):
