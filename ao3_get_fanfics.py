@@ -212,39 +212,50 @@ def get_single_comment(comment, parent):
 	commentid = comment['id'].split('_')[1]
 
 	# Get direct comment text
-	text = comment.find('blockquote', class_ ='userstuff').find('p').contents[0]
+	text = comment.find('blockquote', class_ ='userstuff')#.findAll('p').contents[0]
+	text = text.findAll('p')
+	text = [item.contents[0] for item in text]
+	fullText = ''
+
+	for i, item in enumerate(text):
+		if i < len(text) - 1:
+			fullText += item + '\n'
+		else:
+			fullText += item
+
+	# print(fullText)
+	# print()
 
 	# Create object and return
-	commentData = {'user': username, 'datetime': dateObj, 'id': commentid, 'parent': parent, 'text': text}
+	commentData = {'user': username, 'datetime': dateObj, 'id': commentid, 'parent': parent, 'text': fullText}
 	return commentData
 
 def get_comment_thread(comment_thread, parent):
-	#print(comment_thread[0])
+	all_comments = []
+
 	# Recurse till you find the deepest level
-	if comment_thread[0].findChild('ol', class_ ='thread'):
-		print( comment_thread[0].findChild('ol', class_ ='thread'))
-		nest_level = comment_thread[0].findChild('ol', class_ ='thread')[0]
-		print('nest_level', nest_level)
-		print()
-		get_comment_thread(comment_thread, False)
-	else:
+	try:
+		nest_level = comment_thread[0]
+		nest_level = nest_level.findChild('ol', class_ ='thread')[0]
+		all_comments = get_comment_thread(comment_thread, False)
+	except:
+		# you've found the deepest level
 		comments = comment_thread[0].find_all('li')
 		all_comments = []
-		print('!!1', comments)
+
+		# extracts all comments in line thread
 		for c, comment in enumerate(comments):
-				print(comment)
 				try:
 					if comment.attrs['class']:
 						if 'odd' in comment.attrs['class'] or 'even' in comment.attrs['class']:
-							single_comment = get_single_comment(comment, True)
+							single_comment = get_single_comment(comment, False)
+							print(single_comment)
 							all_comments.append(single_comment)
 							
 				except:
-					print('___', comment)
-					print()
+					pass
 
-		print('+++', all_comments)
-
+	return all_comments
 
 def get_comments(url, header_info):
 	all_comments = []
@@ -253,7 +264,7 @@ def get_comments(url, header_info):
 	req = requests.get(url, headers=headers)
 	src = req.text
 	soup = BeautifulSoup(src, 'html.parser')
-
+	print(soup.find('ol', class_='pagination actions'))
 	# find all pages
 	if (soup.find('ol', class_='pagination actions')):
 		pages = soup.find('ol', class_='pagination actions').findChildren("li" , recursive=False)
@@ -263,6 +274,7 @@ def get_comments(url, header_info):
 		while count <= max_pages:
 			comments = soup.find('ol', class_ = 'thread').findChildren("li" , recursive=False)
 			print(len(comments))
+			
 			# comments processing
 			for c, comment in enumerate(comments):
 				try:
@@ -276,7 +288,7 @@ def get_comments(url, header_info):
 				# likely a comment thread
 				except:
 					if comment.findChild('ol', class_="thread"):
-						get_comment_thread(comment.findChildren('ol'), True)
+						all_comments.append(get_comment_thread(comment.findChildren('ol'), True))
 						#print('!!!', comment.findChildren('ol'))
 
 			# next page
@@ -284,59 +296,24 @@ def get_comments(url, header_info):
 			req = requests.get(url+'?page='+str(count), headers=headers)
 			src = req.text
 			soup = BeautifulSoup(src, 'html.parser')
+	else:
+		comments = soup.find('ol', class_ = 'thread').findChildren("li" , recursive=False)
+		
+		# comments processing
+		for c, comment in enumerate(comments):
+			try:
+				if comment.attrs['class']:
+					if 'odd' in comment.attrs['class'] or 'even' in comment.attrs['class']:
+						single_comment = get_single_comment(comment, True)
+						all_comments.append(single_comment)
 
-# 		var thread = [
-#   {
-#     listid: 1,
-#     commentid: 1,
-#     metadata: "user? other stuff?",
-#     isauthor: false,
-#     comment: "Did you xyz? So good!",
-#     reply:
-#     {
-#       commentid: 2,
-#       metadata: "what metadata you need idk",
-#       isauthor: true,
-#       comment: "Yes! I abc!",
-#       reply:
-#       {
-#         commentid: 3,
-#         metadata: "asdf",
-#         isauthor: false,
-#         comment: "OMG so cool!",
-#         image: "idk how to do this personally",
-#         reply:
-#         {
-#           commentid: 4,
-#           metadata: "bla",
-#           isauthor: true,
-#           comment: "haha thank you!"
-#         }
-#       }
-#     }
-#   },
-#   {
-#     listid: 123,
-#     commentid: 123,
-#     metadata: "user? other stuff?",
-#     isauthor: false,
-#     comment: "I love this!",
-#     reply:
-#     {
-#       commentid: 456,
-#       metadata: "what metadata you need idk",
-#       isauthor: true,
-#       comment: "thank you so much!"
-#     }
-#   },
-#   {
-#     id: 789,
-#     metadata: "stuff",
-#     isauthor: false,
-#     comment: ";aifja;wlefj;awiefjowj"
-#   }
-# ];
-
+			# likely a comment thread
+			except:
+				if comment.findChild('ol', class_="thread"):
+					if len(all_comments) > 0:
+						all_comments[-1]['reply'] = get_comment_thread(comment.findChildren('ol'), True)
+					else:
+						all_comments.append(get_comment_thread(comment.findChildren('ol'), True))
 		return all_comments
 
 
@@ -388,7 +365,7 @@ def write_fic_to_csv(fic_id, only_first_chap, writer, errorwriter, header_info='
 		# get comments
 		comments_url  = 'http://archiveofourown.org/works/' + str(fic_id) + '?show_comments=true#comments'
 		all_comments = get_comments(comments_url, header_info)
-
+		print('!!!', all_comments)
 		#get the fic itself
 		content = soup.find("div", id= "chapters")
 		chapters = content.select('p')
