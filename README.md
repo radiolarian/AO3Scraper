@@ -38,6 +38,7 @@ Now, to actually get the fics, run `python ao3_get_fanfics.py sherlock.csv`. You
 - `--csv output.csv` (the name of the output csv file, default fanfic.csv)
 - `--header 'Chrome/52 (Macintosh; Intel Mac OS X 10_10_5); Jingyi Li/UC Berkeley/email@address.com'` (an optional http header for ethical scraping)
 - `--lang English` (scrapes fics of only a specific language, this argument will not work if you use incorrect spelling and/or capitalization, if this argument is not used the program will scrape all fics regadless of language) Note: if the desired language is not English, then you will have to input the name of that language as it appears on AO3, for example if you want your fics to be in French the argument after `--lang` should be 'Francais' not 'French', including any accents in the input language will also not work.
+- `--bookmarks` includes the users who have bookmarked a fic.  For fics with many bookmarks, this is a slow operation. 
 
 If you don't want to give it a .csv file name, you can also query a single fic id, `python ao3_get_fanfics.py 5937274`, or enter an arbitrarily sized list of them, `python ao3_get_fanfics.py 5937274 7170752`.
 

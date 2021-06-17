@@ -111,7 +111,6 @@ def get_ids(header_info=''):
     sys.stdout.write('.')
     sys.stdout.flush()
     works = soup.select("li.work.blurb.group")
-
     # see if we've gone too far and run out of fic: 
     if (len(works) is 0):
         page_empty = True
