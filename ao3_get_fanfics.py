@@ -23,6 +23,9 @@
 # --restart is an optional string which when used in combination with a csv input will start
 # the scraping from the given work_id, skipping all previous rows in the csv
 #
+# --bookmarks is an optional flag which collects the users who have bookmarked a fic.  
+# Because this is a slow operation, it is excluded by default. 
+#
 # Author: Jingyi Li soundtracknoon [at] gmail
 # I wrote this in Python 2.7. 9/23/16
 # Updated 2/13/18 (also Python3 compatible)
@@ -33,7 +36,6 @@
 # I added a new argument that only gets fanfics of a certain language
 # --lang
 #######
-
 import requests
 from bs4 import BeautifulSoup
 import argparse
@@ -42,6 +44,9 @@ import os
 import csv
 import sys
 from unidecode import unidecode
+
+# seconds to wait between page requests
+delay = 5
 
 def get_tag_info(category, meta):
 	'''
@@ -93,9 +98,7 @@ def get_tags(meta):
 # get kudos
 def get_kudos(meta):
 	if (meta):
-		
 		users = []
-
 		## hunt for kudos' contents
 		kudos = meta.contents
 
@@ -126,13 +129,21 @@ def get_bookmarks(url, header_info):
 
 	req = requests.get(url, headers=headers)
 	src = req.text
+
+	time.sleep(delay)
 	soup = BeautifulSoup(src, 'html.parser')
+
+	sys.stdout.write('scraping bookmarks ')
+	sys.stdout.flush()
 
 	# find all pages
 	if (soup.find('ol', class_='pagination actions')):
 		pages = soup.find('ol', class_='pagination actions').findChildren("li" , recursive=False)
 		max_pages = int(pages[-2].contents[0].contents[0])
 		count = 1
+	
+		sys.stdout.write('(' + str(max_pages) + ' pages)')
+		sys.stdout.flush()
 
 		while count <= max_pages:
 			# extract each bookmark per user
@@ -144,10 +155,14 @@ def get_bookmarks(url, header_info):
 			req = requests.get(url+'?page='+str(count), headers=headers)
 			src = req.text
 			soup = BeautifulSoup(src, 'html.parser')
+			sys.stdout.write('.')
+			sys.stdout.flush()
+			time.sleep(delay)
 	else:
 		tags = soup.findAll('h5', class_='byline heading')
 		bookmarks += get_users(tags)
 
+	print('')
 	return bookmarks
 
 # get users form bookmarks	
@@ -166,7 +181,7 @@ def access_denied(soup):
 		return True
 	return False
 
-def write_fic_to_csv(fic_id, only_first_chap, lang, writer, errorwriter, header_info=''):
+def write_fic_to_csv(fic_id, only_first_chap, lang, include_bookmarks, writer, errorwriter, header_info=''):
 	'''
 	fic_id is the AO3 ID of a fic, found every URL /works/[id].
 	writer is a csv writer object
@@ -195,13 +210,16 @@ def write_fic_to_csv(fic_id, only_first_chap, lang, writer, errorwriter, header_
 		visible_kudos = get_kudos(soup.find('p', class_='kudos'))
 		hidden_kudos = get_kudos(soup.find('span', class_='kudos_expanded hidden'))
 		all_kudos = visible_kudos + hidden_kudos
+
 		if lang != False and lang != stats[0]:
 			print('Fic is not in ' + lang + ', skipping...')
 		else:
 			#get bookmarks
-			bookmark_url = 'http://archiveofourown.org/works/'+str(fic_id)+'/bookmarks'
-			all_bookmarks = get_bookmarks(bookmark_url, header_info)
-
+			if (include_bookmarks):
+				bookmark_url = 'http://archiveofourown.org/works/'+str(fic_id)+'/bookmarks'
+				all_bookmarks = get_bookmarks(bookmark_url, header_info)
+			else:
+				all_bookmarks = []
 			#get the fic itself
 			content = soup.find("div", id= "chapters")
 			chapters = content.select('p')
@@ -235,6 +253,9 @@ def get_args():
 	parser.add_argument(
 		'--lang', default='', 
 		help='only retrieves fics of certain language (e.g English), make sure you use correct spelling and capitalization or this argument will not work')
+	parser.add_argument(
+		'--bookmarks', action='store_true', 
+		help='retrieve bookmarks; ')
 	args = parser.parse_args()
 	fic_ids = args.ids
 	is_csv = (len(fic_ids) == 1 and '.csv' in fic_ids[0]) 
@@ -243,13 +264,14 @@ def get_args():
 	restart = str(args.restart)
 	ofc = str(args.firstchap)
 	lang = str(args.lang)
+	include_bookmarks = args.bookmarks
 	if ofc != "":
 		ofc = True
 	else:
 		ofc = False
 	if lang == "":
 		lang = False
-	return fic_ids, csv_out, headers, restart, is_csv, ofc, lang
+	return fic_ids, csv_out, headers, restart, is_csv, ofc, lang, include_bookmarks
 
 '''
 
@@ -263,8 +285,7 @@ def process_id(fic_id, restart, found):
 		return False
 
 def main():
-	fic_ids, csv_out, headers, restart, is_csv, only_first_chap, lang = get_args()
-	delay = 5
+	fic_ids, csv_out, headers, restart, is_csv, only_first_chap, lang, include_bookmarks = get_args()
 	os.chdir(os.getcwd())
 	with open(csv_out, 'a') as f_out:
 		writer = csv.writer(f_out)
@@ -283,7 +304,7 @@ def main():
 						for row in reader:
 							if not row:
 								continue
-							write_fic_to_csv(row[0], only_first_chap, lang, writer, errorwriter, headers)
+							write_fic_to_csv(row[0], only_first_chap, lang, include_bookmarks, writer, errorwriter, headers)
 							time.sleep(delay)
 					else: 
 						found_restart = False
@@ -292,14 +313,14 @@ def main():
 								continue
 							found_restart = process_id(row[0], restart, found_restart)
 							if found_restart:
-								write_fic_to_csv(row[0], only_first_chap, writer, errorwriter, headers)
+								write_fic_to_csv(row[0], only_first_chap, lang, include_bookmarks, writer, errorwriter, headers)
 								time.sleep(delay)
 							else:
 								print('Skipping already processed fic')
 
 			else:
 				for fic_id in fic_ids:
-					write_fic_to_csv(fic_id, only_first_chap, writer, errorwriter, headers)
+					write_fic_to_csv(fic_id, only_first_chap, lang, include_bookmarks, writer, errorwriter, headers)
 					time.sleep(delay)
 
 main()
