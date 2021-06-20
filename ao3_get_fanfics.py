@@ -223,9 +223,6 @@ def get_single_comment(comment, parent):
 		else:
 			fullText += item
 
-	# print(fullText)
-	# print()
-
 	# Create object and return
 	commentData = {'user': username, 'datetime': dateObj, 'id': commentid, 'parent': parent, 'text': fullText}
 	return commentData
@@ -237,7 +234,9 @@ def get_comment_thread(comment_thread, parent):
 	try:
 		nest_level = comment_thread[0]
 		nest_level = nest_level.findChild('ol', class_ ='thread')[0]
-		all_comments = get_comment_thread(comment_thread, False)
+
+		new_comments = get_comment_thread(comment_thread, False)
+		all_comments.append(new_comments)
 	except:
 		# you've found the deepest level
 		comments = comment_thread[0].find_all('li')
@@ -253,6 +252,8 @@ def get_comment_thread(comment_thread, parent):
 							
 				except:
 					pass
+    
+		return all_comments
 
 	return all_comments
 
@@ -263,7 +264,7 @@ def get_comments(url, header_info):
 	req = requests.get(url, headers=headers)
 	src = req.text
 	soup = BeautifulSoup(src, 'html.parser')
-	print(soup.find('ol', class_='pagination actions'))
+
 	# find all pages
 	if (soup.find('ol', class_='pagination actions')):
 		pages = soup.find('ol', class_='pagination actions').findChildren("li" , recursive=False)
@@ -272,8 +273,7 @@ def get_comments(url, header_info):
 
 		while count <= max_pages:
 			comments = soup.find('ol', class_ = 'thread').findChildren("li" , recursive=False)
-			print(len(comments))
-			
+
 			# comments processing
 			for c, comment in enumerate(comments):
 				try:
@@ -281,8 +281,6 @@ def get_comments(url, header_info):
 						if 'odd' in comment.attrs['class'] or 'even' in comment.attrs['class']:
 							single_comment = get_single_comment(comment, True)
 							all_comments.append(single_comment)
-							print(len(all_comments))
-							print()
 
 				# likely a comment thread
 				except:
@@ -294,9 +292,11 @@ def get_comments(url, header_info):
 			req = requests.get(url+'?page='+str(count), headers=headers)
 			src = req.text
 			soup = BeautifulSoup(src, 'html.parser')
+			
 	else:
 		comments = soup.find('ol', class_ = 'thread').findChildren("li" , recursive=False)
-		
+		last_count = 0
+
 		# comments processing
 		for c, comment in enumerate(comments):
 			try:
@@ -304,15 +304,26 @@ def get_comments(url, header_info):
 					if 'odd' in comment.attrs['class'] or 'even' in comment.attrs['class']:
 						single_comment = get_single_comment(comment, True)
 						all_comments.append(single_comment)
+						last_count+=1
 
 			# likely a comment thread
 			except:
 				if comment.findChild('ol', class_="thread"):
 					if len(all_comments) > 0:
-						all_comments[-1]['reply'] = get_comment_thread(comment.findChildren('ol'), True)
+						new_comments = get_comment_thread(comment.findChildren('ol'), True)
+						
+						# If it's a bunch of replies, store as reply to previous comment
+						if len(all_comments) == last_count:
+							all_comments[-1]['reply'] = new_comments
+							last_count+=1 # To move the index along so that you don't erase the comments
+						else:
+							all_comments.append(new_comments)
 					else:
-						all_comments.append(get_comment_thread(comment.findChildren('ol'), True))
-		return all_comments
+						new_comments = get_comment_thread(comment.findChildren('ol'), True)
+						all_comments.append(new_comments)
+						last_count +=1
+
+	return all_comments
 	
 def access_denied(soup):
 	if (soup.find(class_="flash error")):
@@ -350,23 +361,23 @@ def write_fic_to_csv(fic_id, only_first_chap, writer, errorwriter, header_info='
 		stats = get_stats(meta)
 		title = unidecode(soup.find("h2", class_="title heading").string).strip()
 
-		# get kudos
-		# kudos_url = 'http://archiveofourown.org' + soup.find(id='kudos_more_link')['href']
-		# all_kudos = get_all_kudos(kudos_url, header_info)
+		get kudos
+		kudos_url = 'http://archiveofourown.org' + soup.find(id='kudos_more_link')['href']
+		all_kudos = get_all_kudos(kudos_url, header_info)
 		
-		#get bookmarks
-		# bookmark_url = 'http://archiveofourown.org/works/'+str(fic_id)+'/bookmarks'
-		# all_bookmarks = get_bookmarks(bookmark_url, header_info)
+		get bookmarks
+		bookmark_url = 'http://archiveofourown.org/works/'+str(fic_id)+'/bookmarks'
+		all_bookmarks = get_bookmarks(bookmark_url, header_info)
 
 		# get comments
 		comments_url  = 'http://archiveofourown.org/works/' + str(fic_id) + '?show_comments=true#comments'
 		all_comments = get_comments(comments_url, header_info)
-		print('!!!', all_comments)
+
 		#get the fic itself
 		content = soup.find("div", id= "chapters")
 		chapters = content.select('p')
 		chaptertext = '\n\n'.join([unidecode(chapter.text) for chapter in chapters])
-		row = [fic_id] + [title] + [author] + list(map(lambda x: ', '.join(x), tags)) + stats# + [chaptertext] + [all_kudos] + [all_bookmarks]
+		row = [fic_id] + [title] + [author] + list(map(lambda x: ', '.join(x), tags)) + stats + [chaptertext] + [all_kudos] + [all_bookmarks] + [all_bookmarks]
 
 		try:
 			writer.writerow(row)
@@ -427,7 +438,7 @@ def main():
 			#does the csv already exist? if not, let's write a header row.
 			if os.stat(csv_out).st_size == 0:
 				print('Writing a header row for the csv.')
-				header = ['work_id', 'title', 'author', 'rating', 'category', 'fandom', 'relationship', 'character', 'additional tags', 'language', 'published', 'status', 'status date', 'words', 'chapters', 'comments', 'kudos', 'bookmarks', 'hits', 'body', 'all_kudos', 'all_bookmarks']
+				header = ['work_id', 'title', 'author', 'rating', 'category', 'fandom', 'relationship', 'character', 'additional tags', 'language', 'published', 'status', 'status date', 'words', 'chapters', 'comments', 'kudos', 'bookmarks', 'hits', 'body', 'all_kudos', 'all_bookmarks', 'all_contents']
 				writer.writerow(header)
 			if is_csv:
 				csv_fname = fic_ids[0]
