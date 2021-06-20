@@ -153,7 +153,7 @@ def get_bookmarks(url, header_info):
 			src = req.text
 			soup = BeautifulSoup(src, 'html.parser')
 	else:
-		tags = soup.findAll('h5', class_='byline heading')
+		tags = soup.findAll('li', class_='user short blurb group')
 		bookmarks += get_users(tags, 'bookmark')
 
 	return bookmarks
@@ -361,11 +361,11 @@ def write_fic_to_csv(fic_id, only_first_chap, writer, errorwriter, header_info='
 		stats = get_stats(meta)
 		title = unidecode(soup.find("h2", class_="title heading").string).strip()
 
-		get kudos
+		#get kudos
 		kudos_url = 'http://archiveofourown.org' + soup.find(id='kudos_more_link')['href']
 		all_kudos = get_all_kudos(kudos_url, header_info)
 		
-		get bookmarks
+		#get bookmarks
 		bookmark_url = 'http://archiveofourown.org/works/'+str(fic_id)+'/bookmarks'
 		all_bookmarks = get_bookmarks(bookmark_url, header_info)
 
@@ -377,7 +377,8 @@ def write_fic_to_csv(fic_id, only_first_chap, writer, errorwriter, header_info='
 		content = soup.find("div", id= "chapters")
 		chapters = content.select('p')
 		chaptertext = '\n\n'.join([unidecode(chapter.text) for chapter in chapters])
-		row = [fic_id] + [title] + [author] + list(map(lambda x: ', '.join(x), tags)) + stats + [chaptertext] + [all_kudos] + [all_bookmarks] + [all_bookmarks]
+
+		row = [fic_id] + [title] + [author] + list(map(lambda x: ', '.join(x), tags)) + stats + [all_kudos] + [all_bookmarks] + [all_bookmarks] + [all_comments] + [chaptertext]
 
 		try:
 			writer.writerow(row)
@@ -438,7 +439,7 @@ def main():
 			#does the csv already exist? if not, let's write a header row.
 			if os.stat(csv_out).st_size == 0:
 				print('Writing a header row for the csv.')
-				header = ['work_id', 'title', 'author', 'rating', 'category', 'fandom', 'relationship', 'character', 'additional tags', 'language', 'published', 'status', 'status date', 'words', 'chapters', 'comments', 'kudos', 'bookmarks', 'hits', 'body', 'all_kudos', 'all_bookmarks', 'all_contents']
+				header = ['work_id', 'title', 'author', 'rating', 'category', 'fandom', 'relationship', 'character', 'additional tags', 'language', 'published', 'status', 'status date', 'words', 'chapters', 'comments', 'kudos', 'bookmarks', 'hits', 'all_kudos', 'all_bookmarks', 'all_comments', 'body']
 				writer.writerow(header)
 			if is_csv:
 				csv_fname = fic_ids[0]
