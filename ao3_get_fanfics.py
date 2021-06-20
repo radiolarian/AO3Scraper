@@ -101,6 +101,7 @@ def get_all_kudos(url, header_info):
 		count = 1
 
 		while count <= max_pages:
+			print ('count', count)
 			# extract each bookmark per user
 			tags = soup.find("p", class_="kudos")
 			all_kudos += get_users(tags, 'kudo')
@@ -111,10 +112,11 @@ def get_all_kudos(url, header_info):
 			src = req.text
 			soup = BeautifulSoup(src, 'html.parser')
 	else:
+		# single page of kudos
 		tags = soup.find("p", class_="kudos")
 		all_kudos += get_users(tags, 'kudo')
-
-	return []
+		
+	return all_kudos
 
 # get author(s)
 def get_authors(meta):
@@ -363,6 +365,7 @@ def write_fic_to_csv(fic_id, only_first_chap, writer, errorwriter, header_info='
 
 		#get kudos
 		kudos_url = 'http://archiveofourown.org' + soup.find(id='kudos_more_link')['href']
+		print ('+++', kudos_url)
 		all_kudos = get_all_kudos(kudos_url, header_info)
 		
 		#get bookmarks
@@ -378,7 +381,7 @@ def write_fic_to_csv(fic_id, only_first_chap, writer, errorwriter, header_info='
 		chapters = content.select('p')
 		chaptertext = '\n\n'.join([unidecode(chapter.text) for chapter in chapters])
 
-		row = [fic_id] + [title] + [author] + list(map(lambda x: ', '.join(x), tags)) + stats + [all_kudos] + [all_bookmarks] + [all_bookmarks] + [all_comments] + [chaptertext]
+		row = [fic_id] + [title] + [author] + list(map(lambda x: ', '.join(x), tags)) + stats + [all_kudos] + [all_bookmarks] + [all_comments] + [chaptertext]
 
 		try:
 			writer.writerow(row)
