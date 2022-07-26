@@ -15,6 +15,10 @@ Features:
 - pip install bs4
 - pip install requests
 - pip install unidecode
+- pip install datetime
+- pip install argparse
+- pip install lxml
+
 
 ## Example Usage
 
