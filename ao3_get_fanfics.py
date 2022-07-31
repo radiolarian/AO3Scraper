@@ -300,7 +300,7 @@ def main():
 				csv_fname = fic_ids[0]
 				with open(csv_fname, 'r+') as f_in:
 					reader = csv.reader(f_in)
-					if restart is '':
+					if restart == '':
 						for row in reader:
 							if not row:
 								continue
