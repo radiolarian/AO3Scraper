@@ -104,8 +104,14 @@ def get_args():
 def get_ids(header_info=''):
     global page_empty
     global seen_ids
+
+    # make the request. if we 429, try again later 
     headers = {'user-agent' : header_info}
     req = requests.get(url, headers=headers)
+    while req.status_code == 429:
+        # 5 second delay between requests as per AO3's terms of service
+        time.sleep(5)
+        req = requests.get(url, headers=headers)
     soup = BeautifulSoup(req.text, "lxml")
 
     # some responsiveness in the "UI"
