@@ -28,7 +28,7 @@ tags = []
 # keep track of all processed ids to avoid repeats:
 # this is separate from the temporary batch of ids
 # that are written to the csv and then forgotten
-seen_ids = []
+seen_ids = set()
 
 # 
 # Ask the user for:
@@ -103,15 +103,17 @@ def get_args():
 # 
 def get_ids(header_info=''):
     global page_empty
-    headers = {'user-agent': header_info}
-    status = 429
-    while 429 == status:
+    global seen_ids
+
+    # make the request. if we 429, try again later 
+    headers = {'user-agent' : header_info}
+    req = requests.get(url, headers=headers)
+    while req.status_code == 429:
+        # >5 second delay between requests as per AO3's terms of service
+        time.sleep(10)
         req = requests.get(url, headers=headers)
-        status = req.status_code
-        if 429 == status:
-            print("Request answered with Status-Code "+str(status))
-            print("Trying again in 1 minute...")
-            time.sleep(60)
+        print("Request answered with Status-Code 429, retrying...")
+
     soup = BeautifulSoup(req.text, "lxml")
 
     # some responsiveness in the "UI"
@@ -133,13 +135,13 @@ def get_ids(header_info=''):
                 t = t[5:]
                 if not t in seen_ids:
                     ids.append(t)
-                    seen_ids.append(t)
+                    seen_ids.add(t)
         else:
             t = tag.get('id')
             t = t[5:]
             if not t in seen_ids:
                 ids.append(t)
-                seen_ids.append(t)
+                seen_ids.add(t)
     return ids
 
 # 
@@ -247,11 +249,22 @@ def process_for_ids(header_info=''):
         write_ids_to_csv(ids)
         update_url_to_next_page()
 
+def load_existing_ids():
+    global seen_ids
+    with open(csv_name + ".csv", 'r') as csvfile:
+        id_reader = csv.reader(csvfile)
+        for row in id_reader:
+            seen_ids.add(row[0])
+
 def main():
     header_info = get_args()
     make_readme()
 
+    print ("loading existing file ...\n")
+    load_existing_ids()
+
     print("processing...\n")
+
 
     if (len(tags)):
         for t in tags:
