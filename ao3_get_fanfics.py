@@ -20,8 +20,8 @@
 # csv output file. If left blank, it will be called "fanfics.csv"
 # Note that by default, the script appends to existing csvs instead of overwriting them.
 # 
-# --restart is an optional string which when used in combination with a csv input will start
-# the scraping from the given work_id, skipping all previous rows in the csv
+# --restart is an optional flag which will skip over IDs in the csv output and error files
+# when used in combination with a csv input
 #
 # --bookmarks is an optional flag which collects the users who have bookmarked a fic.
 # Because this is a slow operation, it is excluded by default.
@@ -270,8 +270,8 @@ def get_args():
 		'--header', default='',
 		help='user http header')
 	parser.add_argument(
-		'--restart', default='', 
-		help='work_id to start at from within a csv')
+		'--restart', action='store_true',
+		help='restart script and skip over already processed fics')
 	parser.add_argument(
 		'--firstchap', default='', 
 		help='only retrieve first chapter of multichapter fics')
@@ -288,7 +288,7 @@ def get_args():
 	fic_ids = args.ids
 	csv_out = str(args.csv)
 	headers = str(args.header)
-	restart = str(args.restart)
+	restart = args.restart
 	ofc = str(args.firstchap)
 	lang = str(args.lang)
 	include_bookmarks = args.bookmarks
@@ -304,35 +304,28 @@ def get_args():
 '''
 
 '''
-def process_id(fic_id, restart, found):
-	if found:
-		return True
-	if fic_id == restart:
-		return True
-	else:
-		return False
-
-def generate_fic_ids(fic_ids, csv_out, errors_out):
+def generate_fic_ids(fic_ids, restart, csv_out, errors_out):
 	# check csv_out and errors_out for any processed IDs.
 	# technically this will also add the header row, but it's not like that will match any actual fic ID.
 	# CAUTION: a little wonky because we're using these files as input after we've already opened them
 	# for output. But we're reading the whole file (and closing it) before we generate any IDs to fetch.
 	seen_ids = set()
-	with open(csv_out, 'r') as csvfile:
-		id_reader = csv.reader(csvfile)
-		for row in id_reader:
-			seen_ids.add(row[0])
-	with open(errors_out, 'r') as csvfile:
-		id_reader = csv.reader(csvfile)
-		for row in id_reader:
-			seen_ids.add(row[0])
+	if restart:
+		with open(csv_out, 'r') as csvfile:
+			id_reader = csv.reader(csvfile)
+			for row in id_reader:
+				seen_ids.add(row[0])
+		with open(errors_out, 'r') as csvfile:
+			id_reader = csv.reader(csvfile)
+			for row in id_reader:
+				seen_ids.add(row[0])
 
 	# check if we got a CSV file. If so, open it and yield each ID.
 	if (len(fic_ids) == 1 and '.csv' in fic_ids[0]):
 		csv_fname = fic_ids[0]
 		with open(csv_fname, 'r+') as f_in:
 			reader = csv.reader(f_in)
-			found_restart = False
+			found_restart = not restart
 			for row in reader:
 				if not row:
 					continue
@@ -362,7 +355,6 @@ def main():
 		writer = csv.writer(f_out)
 		with open(errors_out, 'a', newline="") as e_out:
 			errorwriter = csv.writer(e_out)
-
 			#does the csv already exist? if not, let's write a header row.
 			if os.stat(csv_out).st_size == 0:
 				print('Writing a header row for the csv.')
@@ -370,7 +362,7 @@ def main():
 				writer.writerow(header)
 				writer.flush()
 
-			for fic_id in generate_fic_ids(fic_ids, csv_out, errors_out):
+			for fic_id in generate_fic_ids(fic_ids, restart, csv_out, errors_out):
 				write_fic_to_csv(fic_id, only_first_chap, lang, include_bookmarks, metadata_only, writer, errorwriter, headers)
 				time.sleep(delay)
 
