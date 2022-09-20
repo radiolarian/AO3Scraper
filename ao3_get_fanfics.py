@@ -192,7 +192,7 @@ def write_fic_to_csv(fic_id, only_first_chap, lang, include_bookmarks, metadata_
 	fic_id is the AO3 ID of a fic, found every URL /works/[id].
 	writer is a csv writer object
 	the output of this program is a row in the CSV file containing all metadata
-	and the fic content itself (excludes content if metadata_only=False).
+	and the fic content itself (excludes content if metadata_only=True).
 	header_info should be the header info to encourage ethical scraping.
 	'''
 	print('Scraping ', fic_id)
