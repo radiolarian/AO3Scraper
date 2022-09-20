@@ -312,17 +312,31 @@ def process_id(fic_id, restart, found):
 	else:
 		return False
 
-def generate_fic_ids(fic_ids, restart):
+def generate_fic_ids(fic_ids, csv_out, errors_out):
+	# check csv_out and errors_out for any processed IDs.
+	# technically this will also add the header row, but it's not like that will match any actual fic ID.
+	# CAUTION: a little wonky because we're using these files as input after we've already opened them
+	# for output. But we're reading the whole file (and closing it) before we generate any IDs to fetch.
+	seen_ids = set()
+	with open(csv_out, 'r') as csvfile:
+		id_reader = csv.reader(csvfile)
+		for row in id_reader:
+			seen_ids.add(row[0])
+	with open(errors_out, 'r') as csvfile:
+		id_reader = csv.reader(csvfile)
+		for row in id_reader:
+			seen_ids.add(row[0])
+
 	# check if we got a CSV file. If so, open it and yield each ID.
 	if (len(fic_ids) == 1 and '.csv' in fic_ids[0]):
 		csv_fname = fic_ids[0]
 		with open(csv_fname, 'r+') as f_in:
 			reader = csv.reader(f_in)
-			found_restart = restart == '' # if we have no restart, we have already "found" it
+			found_restart = False
 			for row in reader:
 				if not row:
 					continue
-				found_restart = found_restart or row[0] == restart
+				found_restart = found_restart or (row[0] not in seen_ids)
 				if found_restart:
 					yield row[0]
 				else:
@@ -343,9 +357,10 @@ def main():
 		print("Creating output directory " + output_directory)
 		os.mkdir(output_directory)
 
+	errors_out = os.path.join(os.path.dirname(csv_out), "errors_" + os.path.basename(csv_out))
 	with open(csv_out, 'a', newline="") as f_out:
 		writer = csv.writer(f_out)
-		with open(os.path.join(os.path.dirname(csv_out), "errors_" + os.path.basename(csv_out)), 'a', newline="") as e_out:
+		with open(errors_out, 'a', newline="") as e_out:
 			errorwriter = csv.writer(e_out)
 
 			#does the csv already exist? if not, let's write a header row.
@@ -353,9 +368,10 @@ def main():
 				print('Writing a header row for the csv.')
 				header = ['work_id', 'title', 'author', 'rating', 'category', 'fandom', 'relationship', 'character', 'additional tags', 'language', 'published', 'status', 'status date', 'words', 'chapters', 'comments', 'kudos', 'bookmarks', 'hits', 'all_kudos', 'all_bookmarks', 'body']
 				writer.writerow(header)
+				writer.flush()
 
-			for fic_id in generate_fic_ids(fic_ids, restart):
-				write_fic_to_csv(row[0], only_first_chap, lang, include_bookmarks, metadata_only, writer, errorwriter, headers)
+			for fic_id in generate_fic_ids(fic_ids, csv_out, errors_out):
+				write_fic_to_csv(fic_id, only_first_chap, lang, include_bookmarks, metadata_only, writer, errorwriter, headers)
 				time.sleep(delay)
 
 main()
