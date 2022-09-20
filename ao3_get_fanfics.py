@@ -318,7 +318,7 @@ def main():
 	os.chdir(os.getcwd())
 	with open(csv_out, 'a', newline="") as f_out:
 		writer = csv.writer(f_out)
-		with open("errors_" + csv_out, 'a', newline="") as e_out:
+		with open(os.path.join(os.path.dirname(csv_out), "errors_" + os.path.basename(csv_out)), 'a', newline="") as e_out:
 			errorwriter = csv.writer(e_out)
 			#does the csv already exist? if not, let's write a header row.
 			if os.stat(csv_out).st_size == 0:
