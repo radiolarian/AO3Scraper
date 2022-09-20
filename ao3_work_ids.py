@@ -15,6 +15,7 @@ import csv
 import sys
 import datetime
 import argparse
+import os
 
 page_empty = False
 base_url = ""
@@ -251,10 +252,15 @@ def process_for_ids(header_info=''):
 
 def load_existing_ids():
     global seen_ids
-    with open(csv_name + ".csv", 'r') as csvfile:
-        id_reader = csv.reader(csvfile)
-        for row in id_reader:
-            seen_ids.add(row[0])
+
+    if (os.path.exists(csv_name + ".csv")):
+        print("skipping existing IDs...\n")
+        with open(csv_name + ".csv", 'r') as csvfile:
+            id_reader = csv.reader(csvfile)
+            for row in id_reader:
+                seen_ids.add(row[0])
+    else:
+        print("no existing file; creating new file...\n")
 
 def main():
     header_info = get_args()
