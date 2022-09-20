@@ -26,6 +26,12 @@
 # --bookmarks is an optional flag which collects the users who have bookmarked a fic.
 # Because this is a slow operation, it is excluded by default.
 #
+# --firstchap is an optional flag which, when set, only pulls the first chapter instead
+# of all chapters.
+#
+# --metadata-only is an optional flag which pulls the metadata but not the content.
+# default is off (i.e. default includes the fic contents). This also implies --firstchap
+#
 # Author: Jingyi Li soundtracknoon [at] gmail
 # I wrote this in Python 2.7. 9/23/16
 # Updated 2/13/18 (also Python3 compatible)
@@ -181,17 +187,17 @@ def access_denied(soup):
 		return True
 	return False
 
-def write_fic_to_csv(fic_id, only_first_chap, lang, include_bookmarks, writer, errorwriter, header_info=''):
+def write_fic_to_csv(fic_id, only_first_chap, lang, include_bookmarks, metadata_only, writer, errorwriter, header_info=''):
 	'''
 	fic_id is the AO3 ID of a fic, found every URL /works/[id].
 	writer is a csv writer object
-	the output of this program is a row in the CSV file containing all metadata 
-	and the fic content itself.
+	the output of this program is a row in the CSV file containing all metadata
+	and the fic content itself (excludes content if metadata_only=False).
 	header_info should be the header info to encourage ethical scraping.
 	'''
 	print('Scraping ', fic_id)
 	url = 'http://archiveofourown.org/works/'+str(fic_id)+'?view_adult=true'
-	if not only_first_chap:
+	if not (only_first_chap or metadata_only):
 		url = url + '&amp;view_full_work=true'
 	headers = {'user-agent' : header_info}
 	status = 429
@@ -237,9 +243,12 @@ def write_fic_to_csv(fic_id, only_first_chap, lang, include_bookmarks, writer, e
 			else:
 				all_bookmarks = []
 			#get the fic itself
-			content = soup.find("div", id= "chapters")
-			chapters = content.select('p')
-			chaptertext = '\n\n'.join([unidecode(chapter.text) for chapter in chapters])
+			if not metadata_only:
+				content = soup.find("div", id= "chapters")
+				chapters = content.select('p')
+				chaptertext = '\n\n'.join([unidecode(chapter.text) for chapter in chapters])
+			else:
+				chaptertext = ""
 			row = [fic_id] + [title] + [author] + list(map(lambda x: ', '.join(x), tags)) + stats + [all_kudos] + [all_bookmarks] + [chaptertext]
 			try:
 				writer.writerow(row)
@@ -272,6 +281,9 @@ def get_args():
 	parser.add_argument(
 		'--bookmarks', action='store_true',
 		help='retrieve bookmarks; ')
+	parser.add_argument(
+		'--metadata-only', action='store_true',
+		help='only retrieve metadata')
 	args = parser.parse_args()
 	fic_ids = args.ids
 	is_csv = (len(fic_ids) == 1 and '.csv' in fic_ids[0]) 
@@ -281,13 +293,14 @@ def get_args():
 	ofc = str(args.firstchap)
 	lang = str(args.lang)
 	include_bookmarks = args.bookmarks
+	metadata_only = args.metadata_only
 	if ofc != "":
 		ofc = True
 	else:
 		ofc = False
 	if lang == "":
 		lang = False
-	return fic_ids, csv_out, headers, restart, is_csv, ofc, lang, include_bookmarks
+	return fic_ids, csv_out, headers, restart, is_csv, ofc, lang, include_bookmarks, metadata_only
 
 '''
 
@@ -301,7 +314,7 @@ def process_id(fic_id, restart, found):
 		return False
 
 def main():
-	fic_ids, csv_out, headers, restart, is_csv, only_first_chap, lang, include_bookmarks = get_args()
+	fic_ids, csv_out, headers, restart, is_csv, only_first_chap, lang, include_bookmarks, metadata_only = get_args()
 	os.chdir(os.getcwd())
 	with open(csv_out, 'a', newline="") as f_out:
 		writer = csv.writer(f_out)
@@ -320,7 +333,7 @@ def main():
 						for row in reader:
 							if not row:
 								continue
-							write_fic_to_csv(row[0], only_first_chap, lang, include_bookmarks, writer, errorwriter, headers)
+							write_fic_to_csv(row[0], only_first_chap, lang, include_bookmarks, metadata_only, writer, errorwriter, headers)
 							time.sleep(delay)
 					else: 
 						found_restart = False
@@ -329,14 +342,14 @@ def main():
 								continue
 							found_restart = process_id(row[0], restart, found_restart)
 							if found_restart:
-								write_fic_to_csv(row[0], only_first_chap, lang, include_bookmarks, writer, errorwriter, headers)
+								write_fic_to_csv(row[0], only_first_chap, lang, include_bookmarks, metadata_only, writer, errorwriter, headers)
 								time.sleep(delay)
 							else:
 								print('Skipping already processed fic')
 
 			else:
 				for fic_id in fic_ids:
-					write_fic_to_csv(fic_id, only_first_chap, lang, include_bookmarks, writer, errorwriter, headers)
+					write_fic_to_csv(fic_id, only_first_chap, lang, include_bookmarks, metadata_only, writer, errorwriter, headers)
 					time.sleep(delay)
 
 main()
