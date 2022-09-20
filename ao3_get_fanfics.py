@@ -316,6 +316,12 @@ def process_id(fic_id, restart, found):
 def main():
 	fic_ids, csv_out, headers, restart, is_csv, only_first_chap, lang, include_bookmarks, metadata_only = get_args()
 	os.chdir(os.getcwd())
+	# if the pathname includes a folder, make sure it exists.  if not, create it.
+	output_directory = os.path.dirname(csv_out)
+	print(output_directory)
+	if (not os.path.isdir(output_directory)):
+		print("Creating output directory " + output_directory)
+		os.mkdir(output_directory)
 	with open(csv_out, 'a', newline="") as f_out:
 		writer = csv.writer(f_out)
 		with open(os.path.join(os.path.dirname(csv_out), "errors_" + os.path.basename(csv_out)), 'a', newline="") as e_out:
