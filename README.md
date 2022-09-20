@@ -15,6 +15,10 @@ Features:
 - pip install bs4
 - pip install requests
 - pip install unidecode
+- pip install datetime
+- pip install argparse
+- pip install lxml
+
 
 ## Example Usage
 
@@ -39,12 +43,12 @@ Now, to actually get the fics, run `python ao3_get_fanfics.py sherlock.csv`. You
 - `--header 'Chrome/52 (Macintosh; Intel Mac OS X 10_10_5); Jingyi Li/UC Berkeley/email@address.com'` (an optional http header for ethical scraping)
 - `--lang English` (scrapes fics of only a specific language, this argument will not work if you use incorrect spelling and/or capitalization, if this argument is not used the program will scrape all fics regadless of language) Note: if the desired language is not English, then you will have to input the name of that language as it appears on AO3, for example if you want your fics to be in French the argument after `--lang` should be 'Francais' not 'French', including any accents in the input language will also not work.
 - `--bookmarks` includes the users who have bookmarked a fic.  For fics with many bookmarks, this is a slow operation. 
+- `--firstchap 1` will retrieve only the first chapter of multi-chapter fics. By default, we save all chapters are saved.
+- `--metadata-only` will skip retrieving any fic contents and only stores the metadata for fics.
 
 If you don't want to give it a .csv file name, you can also query a single fic id, `python ao3_get_fanfics.py 5937274`, or enter an arbitrarily sized list of them, `python ao3_get_fanfics.py 5937274 7170752`.
 
 If you stop a scrape from a csv partway through (or it crashes), you can restart from the last uncollected work_id using the flag `--restart 012345` (the work_id).  The scraper will skip all ids up to that point in the csv, then begin again from the given id. 
-
-By default, we save all chapters of multi-chapter fics. Use `--firstchap 1` to only retrieve the first chapter of multichapter fics. 
 
 We cannot scrape fics that are locked (for registered users only), but submit a pull request if you want to build authentication! 
 
