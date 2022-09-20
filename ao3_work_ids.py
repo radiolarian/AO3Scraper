@@ -75,7 +75,7 @@ def get_args():
     csv_name = str(args.out_csv)
     
     # defaults to all
-    if (str(args.num_to_retrieve) is 'a'):
+    if (str(args.num_to_retrieve) == 'a'):
         num_requested_fic = -1
     else:
         num_requested_fic = int(args.num_to_retrieve)
@@ -109,9 +109,11 @@ def get_ids(header_info=''):
     headers = {'user-agent' : header_info}
     req = requests.get(url, headers=headers)
     while req.status_code == 429:
-        # 5 second delay between requests as per AO3's terms of service
-        time.sleep(5)
+        # >5 second delay between requests as per AO3's terms of service
+        time.sleep(10)
         req = requests.get(url, headers=headers)
+        print("Request answered with Status-Code 429, retrying...")
+
     soup = BeautifulSoup(req.text, "lxml")
 
     # some responsiveness in the "UI"
@@ -119,7 +121,7 @@ def get_ids(header_info=''):
     sys.stdout.flush()
     works = soup.select("li.work.blurb.group")
     # see if we've gone too far and run out of fic: 
-    if (len(works) is 0):
+    if (len(works) == 0):
         page_empty = True
 
     # process list for new fic ids
@@ -153,12 +155,12 @@ def update_url_to_next_page():
     start = url.find(key)
 
     # there is already a page indicator in the url
-    if (start is not -1):
+    if (start != -1):
         # find where in the url the page indicator starts and ends
         page_start_index = start + len(key)
         page_end_index = url.find("&", page_start_index)
         # if it's in the middle of the url
-        if (page_end_index is not -1):
+        if (page_end_index != -1):
             page = int(url[page_start_index:page_end_index]) + 1
             url = url[:page_start_index] + str(page) + url[page_end_index:]
         # if it's at the end of the url
@@ -169,7 +171,7 @@ def update_url_to_next_page():
     # there is no page indicator, so we are on page 1
     else:
         # there are other modifiers
-        if (url.find("?") is not -1):
+        if (url.find("?") != -1):
             url = url + "&page=2"
         # there an no modifiers yet
         else:
@@ -196,7 +198,7 @@ def add_tag_to_url(tag):
 # 
 def write_ids_to_csv(ids):
     global num_recorded_fic
-    with open(csv_name + ".csv", 'a') as csvfile:
+    with open(csv_name + ".csv", 'a', newline="") as csvfile:
         wr = csv.writer(csvfile, delimiter=',')
         for id in ids:
             if (not_finished()):
@@ -261,7 +263,8 @@ def main():
     print ("loading existing file ...\n")
     load_existing_ids()
 
-    print ("processing...\n")
+    print("processing...\n")
+
 
     if (len(tags)):
         for t in tags:
@@ -272,6 +275,6 @@ def main():
     else:
         process_for_ids(header_info)
 
-    print ("That's all, folks.")
+    print("That's all, folks.")
 
 main()
