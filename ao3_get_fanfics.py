@@ -311,14 +311,13 @@ def generate_fic_ids(fic_ids, restart, csv_out, errors_out):
 	# for output. But we're reading the whole file (and closing it) before we generate any IDs to fetch.
 	seen_ids = set()
 	if restart:
-		with open(csv_out, 'r') as csvfile:
-			id_reader = csv.reader(csvfile)
-			for row in id_reader:
-				seen_ids.add(row[0])
-		with open(errors_out, 'r') as csvfile:
-			id_reader = csv.reader(csvfile)
-			for row in id_reader:
-				seen_ids.add(row[0])
+		for filename in (csv_out, errors_out):
+			if os.path.exists(filename):
+				print("skipping fic IDs in", filename)
+				with open(filename, 'r') as csvfile:
+					id_reader = csv.reader(csvfile)
+					for row in id_reader:
+						seen_ids.add(row[0])
 
 	# check if we got a CSV file. If so, open it and yield each ID.
 	if (len(fic_ids) == 1 and '.csv' in fic_ids[0]):
