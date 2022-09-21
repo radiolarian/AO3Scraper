@@ -324,15 +324,11 @@ def generate_fic_ids(fic_ids, restart, csv_out, errors_out):
 		csv_fname = fic_ids[0]
 		with open(csv_fname, 'r+') as f_in:
 			reader = csv.reader(f_in)
-			found_restart = not restart
 			for row in reader:
 				if not row:
 					continue
-				found_restart = found_restart or (row[0] not in seen_ids)
-				if found_restart:
+				if row[0] not in seen_ids:
 					yield row[0]
-				else:
-					print('Skipping already processed fic')
 	else:
 		# this is a little bit strange, but since yielding from the CSV is cleaner,
 		# this also needs to yield rather than returning the list.
