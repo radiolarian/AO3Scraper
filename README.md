@@ -48,13 +48,13 @@ Now, to actually get the fics, run `python ao3_get_fanfics.py sherlock.csv`. You
 
 If you don't want to give it a .csv file name, you can also query a single fic id, `python ao3_get_fanfics.py 5937274`, or enter an arbitrarily sized list of them, `python ao3_get_fanfics.py 5937274 7170752`.
 
-If you stop a scrape from a csv partway through (or it crashes), you can restart from the last uncollected work_id using the flag `--restart 012345` (the work_id).  The scraper will skip all ids up to that point in the csv, then begin again from the given id. 
+If you stop a scrape from a csv partway through (or it crashes), you can restart the script using the flag `--restart`.  The scraper will skip all ids in the output file and the error file.
 
-We cannot scrape fics that are locked (for registered users only), but submit a pull request if you want to build authentication! 
+We cannot scrape fics that are locked (for registered users only), but submit a pull request if you want to build authentication!
 
 **Note that the 5 second delays before requesting from AO3's server are in compliance with the AO3 terms of service.  Please do not remove these delays.**
 
-Happy scraping! 
+Happy scraping!
 
 ## Improvements
 
@@ -62,7 +62,7 @@ We love pull requests!
 
 ## FF.net
 
-Want to scrape fanfiction.net? Check out my friend [@smilli](https://github.com/smilli/)'s [ff.net scraper](https://github.com/smilli/fanfiction)! 
+Want to scrape fanfiction.net? Check out my friend [@smilli](https://github.com/smilli/)'s [ff.net scraper](https://github.com/smilli/fanfiction)!
 
 ## License
 This work is licensed under the Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0). Feel free to use it and adapt it however you want, but don't make money off of it!
