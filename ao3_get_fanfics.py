@@ -355,7 +355,7 @@ def main():
 				print('Writing a header row for the csv.')
 				header = ['work_id', 'title', 'author', 'rating', 'category', 'fandom', 'relationship', 'character', 'additional tags', 'language', 'published', 'status', 'status date', 'words', 'chapters', 'comments', 'kudos', 'bookmarks', 'hits', 'all_kudos', 'all_bookmarks', 'body']
 				writer.writerow(header)
-				writer.flush()
+				f_out.flush()
 
 			for fic_id in generate_fic_ids(fic_ids, resume, csv_out, errors_out):
 				write_fic_to_csv(fic_id, only_first_chap, lang, include_bookmarks, metadata_only, writer, errorwriter, headers)
