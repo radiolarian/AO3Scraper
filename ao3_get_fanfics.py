@@ -20,7 +20,7 @@
 # csv output file. If left blank, it will be called "fanfics.csv"
 # Note that by default, the script appends to existing csvs instead of overwriting them.
 # 
-# --restart is an optional flag which will skip over IDs in the csv output and error files
+# --resume is an optional flag which will skip over IDs in the csv output and error files
 # when used in combination with a csv input
 #
 # --bookmarks is an optional flag which collects the users who have bookmarked a fic.
@@ -270,8 +270,8 @@ def get_args():
 		'--header', default='',
 		help='user http header')
 	parser.add_argument(
-		'--restart', action='store_true',
-		help='restart script and skip over already processed fics')
+		'--resume', action='store_true',
+		help='resume script and skip over already processed fics')
 	parser.add_argument(
 		'--firstchap', default='', 
 		help='only retrieve first chapter of multichapter fics')
@@ -288,7 +288,7 @@ def get_args():
 	fic_ids = args.ids
 	csv_out = str(args.csv)
 	headers = str(args.header)
-	restart = args.restart
+	resume = args.resume
 	ofc = str(args.firstchap)
 	lang = str(args.lang)
 	include_bookmarks = args.bookmarks
@@ -299,18 +299,18 @@ def get_args():
 		ofc = False
 	if lang == "":
 		lang = False
-	return fic_ids, csv_out, headers, restart, ofc, lang, include_bookmarks, metadata_only
+	return fic_ids, csv_out, headers, resume, ofc, lang, include_bookmarks, metadata_only
 
 '''
 
 '''
-def generate_fic_ids(fic_ids, restart, csv_out, errors_out):
+def generate_fic_ids(fic_ids, resume, csv_out, errors_out):
 	# check csv_out and errors_out for any processed IDs.
 	# technically this will also add the header row, but it's not like that will match any actual fic ID.
 	# CAUTION: a little wonky because we're using these files as input after we've already opened them
 	# for output. But we're reading the whole file (and closing it) before we generate any IDs to fetch.
 	seen_ids = set()
-	if restart:
+	if resume:
 		for filename in (csv_out, errors_out):
 			if os.path.exists(filename):
 				print("skipping fic IDs in", filename)
@@ -336,7 +336,7 @@ def generate_fic_ids(fic_ids, restart, csv_out, errors_out):
 			yield fic_id
 
 def main():
-	fic_ids, csv_out, headers, restart, only_first_chap, lang, include_bookmarks, metadata_only = get_args()
+	fic_ids, csv_out, headers, resume, only_first_chap, lang, include_bookmarks, metadata_only = get_args()
 	os.chdir(os.getcwd())
 	# if the output pathname includes a folder, make sure it exists.  if not, create it.
 	output_directory = os.path.dirname(csv_out)
@@ -357,7 +357,7 @@ def main():
 				writer.writerow(header)
 				writer.flush()
 
-			for fic_id in generate_fic_ids(fic_ids, restart, csv_out, errors_out):
+			for fic_id in generate_fic_ids(fic_ids, resume, csv_out, errors_out):
 				write_fic_to_csv(fic_id, only_first_chap, lang, include_bookmarks, metadata_only, writer, errorwriter, headers)
 				time.sleep(delay)
 
