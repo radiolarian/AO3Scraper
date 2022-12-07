@@ -48,7 +48,7 @@ Now, to actually get the fics, run `python ao3_get_fanfics.py sherlock.csv`. You
 
 If you don't want to give it a .csv file name, you can also query a single fic id, `python ao3_get_fanfics.py 5937274`, or enter an arbitrarily sized list of them, `python ao3_get_fanfics.py 5937274 7170752`.
 
-If you stop a scrape from a csv partway through (or it crashes), you can restart the script using the flag `--restart`.  The scraper will skip all ids in the output file and the error file.
+If you stop a scrape from a csv partway through (or it crashes), you can resume the script using the flag `--resume`.  The scraper will skip all ids in the output file and the error file. (This previously was handled by `--restart ID`.)
 
 We cannot scrape fics that are locked (for registered users only), but submit a pull request if you want to build authentication!
 
