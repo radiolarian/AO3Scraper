@@ -49,7 +49,7 @@ import time
 import os
 import csv
 import sys
-from unidecode import unidecode
+# from unidecode import unidecode
 
 # seconds to wait between page requests
 delay = 5
@@ -62,25 +62,25 @@ def get_tag_info(category, meta):
 		tag_list = meta.find("dd", class_=str(category) + ' tags').find_all(class_="tag")
 	except AttributeError as e:
 		return []
-	return [unidecode(result.text) for result in tag_list] 
+	return [result.text for result in tag_list]
 	
 def get_stats(meta):
 	'''
 	returns a list of  
 	language, published, status, date status, words, chapters, comments, kudos, bookmarks, hits
 	'''
-	categories = ['language', 'published', 'status', 'words', 'chapters', 'comments', 'kudos', 'bookmarks', 'hits'] 
+	categories = ['language', 'published', 'status', 'words', 'chapters', 'comments', 'kudos', 'bookmarks', 'hits']
 
 	stats = list(map(lambda category: meta.find("dd", class_=category), categories))
 
 	if not stats[2]:
 		stats[2] = stats[1] #no explicit completed field -- one shot
 	try:		
-		stats = [unidecode(stat.text) for stat in stats]
+		stats = [stat.text for stat in stats]
 	except AttributeError as e: #for some reason, AO3 sometimes miss stat tags (like hits)
 		new_stats = []
 		for stat in stats:
-			if stat: new_stats.append(unidecode(stat.text))
+			if stat: new_stats.append(stat.text)
 			else: new_stats.append('null')
 		stats = new_stats
 
@@ -187,7 +187,7 @@ def access_denied(soup):
 		return True
 	return False
 
-def write_fic_to_csv(fic_id, only_first_chap, lang, include_bookmarks, metadata_only, writer, errorwriter, header_info=''):
+def write_fic_to_csv(fic_id, only_first_chap, lang, include_bookmarks, metadata_only, writer, errorwriter, work_count, header_info=''):
 	'''
 	fic_id is the AO3 ID of a fic, found every URL /works/[id].
 	writer is a csv writer object
@@ -195,7 +195,8 @@ def write_fic_to_csv(fic_id, only_first_chap, lang, include_bookmarks, metadata_
 	and the fic content itself (excludes content if metadata_only=True).
 	header_info should be the header info to encourage ethical scraping.
 	'''
-	print('Scraping ', fic_id)
+    
+	print(f'Scraping work ID {fic_id}, Work number: {work_count}')
 	url = 'http://archiveofourown.org/works/'+str(fic_id)+'?view_adult=true'
 	if not (only_first_chap or metadata_only):
 		url = url + '&amp;view_full_work=true'
@@ -228,7 +229,7 @@ def write_fic_to_csv(fic_id, only_first_chap, lang, include_bookmarks, metadata_
 		author = get_authors(soup.find("h3", class_="byline heading"))
 		tags = get_tags(meta)
 		stats = get_stats(meta)
-		title = unidecode(soup.find("h2", class_="title heading").string).strip()
+		title = soup.find("h2", class_="title heading").string.strip()
 		visible_kudos = get_kudos(soup.find('p', class_='kudos'))
 		hidden_kudos = get_kudos(soup.find('span', class_='kudos_expanded hidden'))
 		all_kudos = visible_kudos + hidden_kudos
@@ -246,7 +247,7 @@ def write_fic_to_csv(fic_id, only_first_chap, lang, include_bookmarks, metadata_
 			if not metadata_only:
 				content = soup.find("div", id= "chapters")
 				chapters = content.select('p')
-				chaptertext = '\n\n'.join([unidecode(chapter.text) for chapter in chapters])
+				chaptertext = '\n\n'.join([chapter.text for chapter in chapters])
 			else:
 				chaptertext = ""
 			row = [fic_id] + [title] + [author] + list(map(lambda x: ', '.join(x), tags)) + stats + [all_kudos] + [all_bookmarks] + [chaptertext]
@@ -322,7 +323,7 @@ def main():
 	if (output_directory and not os.path.isdir(output_directory)):
 		print("Creating output directory " + output_directory)
 		os.mkdir(output_directory)
-	with open(csv_out, 'a', newline="") as f_out:
+	with open(csv_out, 'a', newline="", encoding='utf-8') as f_out:
 		writer = csv.writer(f_out)
 		with open(os.path.join(os.path.dirname(csv_out), "errors_" + os.path.basename(csv_out)), 'a', newline="") as e_out:
 			errorwriter = csv.writer(e_out)
@@ -331,15 +332,17 @@ def main():
 				print('Writing a header row for the csv.')
 				header = ['work_id', 'title', 'author', 'rating', 'category', 'fandom', 'relationship', 'character', 'additional tags', 'language', 'published', 'status', 'status date', 'words', 'chapters', 'comments', 'kudos', 'bookmarks', 'hits', 'all_kudos', 'all_bookmarks', 'body']
 				writer.writerow(header)
+			work_count = 0
 			if is_csv:
 				csv_fname = fic_ids[0]
-				with open(csv_fname, 'r+', newline="") as f_in:
+				with open(csv_fname, 'r+', newline="", encoding='utf-8') as f_in:
 					reader = csv.reader(f_in)
 					if restart == '':
 						for row in reader:
 							if not row:
 								continue
-							write_fic_to_csv(row[0], only_first_chap, lang, include_bookmarks, metadata_only, writer, errorwriter, headers)
+							work_count += 1  # Increment the work counter
+							write_fic_to_csv(row[0], only_first_chap, lang, include_bookmarks, metadata_only, writer, errorwriter, work_count, headers)
 							time.sleep(delay)
 					else: 
 						found_restart = False
@@ -348,14 +351,15 @@ def main():
 								continue
 							found_restart = process_id(row[0], restart, found_restart)
 							if found_restart:
-								write_fic_to_csv(row[0], only_first_chap, lang, include_bookmarks, metadata_only, writer, errorwriter, headers)
+								write_fic_to_csv(row[0], only_first_chap, lang, include_bookmarks, metadata_only, writer, errorwriter, work_count, headers)
 								time.sleep(delay)
 							else:
 								print('Skipping already processed fic')
 
 			else:
 				for fic_id in fic_ids:
-					write_fic_to_csv(fic_id, only_first_chap, lang, include_bookmarks, metadata_only, writer, errorwriter, headers)
+					work_count += 1  # Increment the work counter
+					write_fic_to_csv(fic_id, only_first_chap, lang, include_bookmarks, metadata_only, writer, errorwriter, work_count, headers)
 					time.sleep(delay)
 
 main()

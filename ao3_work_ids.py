@@ -62,7 +62,7 @@ def get_args():
         '--header', default='',
         help='user http header')
     parser.add_argument(
-        '--num_to_retrieve', default='a', 
+        '--num_to_retrieve', default='10', 
         help='how many fic ids you want')
     parser.add_argument(
         '--multichapter_only', default='', 
